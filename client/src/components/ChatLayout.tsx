@@ -1,56 +1,35 @@
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Send, Hash, User, Bot, Plus, Search, Bell, MoreVertical, Smile, Paperclip } from "lucide-react";
+import { motion } from "framer-motion";
+import { Send, Hash, Bot, Plus, Search, Bell, MoreVertical, Smile, ChevronDown, Users } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-// Types
-type Message = {
-  id: string;
-  text: string;
-  sender: "user" | "cpu";
-  timestamp: Date;
-};
-
-type Channel = {
-  id: string;
-  name: string;
-  unread: number;
-};
-
-// Mock Data
-const INITIAL_CHANNELS: Channel[] = [
-  { id: "1", name: "general", unread: 0 },
-  { id: "2", name: "random", unread: 2 },
-  { id: "3", name: "design-team", unread: 0 },
-  { id: "4", name: "announcements", unread: 5 },
-  { id: "5", name: "project-alpha", unread: 0 },
-];
-
-const INITIAL_MESSAGES: Record<string, Message[]> = {
-  "1": [
-    { id: "m1", text: "Welcome to the general channel!", sender: "cpu", timestamp: new Date(Date.now() - 1000 * 60 * 60) },
-  ],
-  "2": [
-    { id: "m2", text: "Anyone seen the new design specs?", sender: "user", timestamp: new Date(Date.now() - 1000 * 60 * 30) },
-    { id: "m3", text: "Yes, they look amazing!", sender: "cpu", timestamp: new Date(Date.now() - 1000 * 60 * 29) },
-  ],
-};
+import { useAppStore } from "@/lib/store";
+import ChannelDialog from "./ChannelDialog";
+import UserListDialog from "./UserListDialog";
 
 export default function ChatLayout() {
-  const [activeChannelId, setActiveChannelId] = useState("1");
-  const [channels, setChannels] = useState(INITIAL_CHANNELS);
-  const [messages, setMessages] = useState(INITIAL_MESSAGES);
+  const { 
+    users, channels, messages, activeChannelId, 
+    setActiveChannel, addMessage 
+  } = useAppStore();
+  
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [channelDialogOpen, setChannelDialogOpen] = useState(false);
+  const [channelDialogMode, setChannelDialogMode] = useState<"create" | "edit">("create");
+  const [userListOpen, setUserListOpen] = useState(false);
+  const [userListIds, setUserListIds] = useState<string[] | undefined>(undefined);
+  const [userListTitle, setUserListTitle] = useState("");
+  
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const activeChannel = channels.find((c) => c.id === activeChannelId) || channels[0];
-  const currentMessages = messages[activeChannelId] || [];
+  const currentMessages = messages.filter(m => m.channelId === activeChannelId);
+  const channelMembers = users.filter(u => activeChannel.members.includes(u.id));
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -63,34 +42,59 @@ export default function ChatLayout() {
     e?.preventDefault();
     if (!inputText.trim()) return;
 
-    const newMessage: Message = {
+    const newMessage = {
       id: Date.now().toString(),
       text: inputText,
-      sender: "user",
+      senderId: "me",
+      channelId: activeChannelId,
       timestamp: new Date(),
     };
 
-    setMessages((prev) => ({
-      ...prev,
-      [activeChannelId]: [...(prev[activeChannelId] || []), newMessage],
-    }));
+    addMessage(newMessage);
     setInputText("");
     setIsTyping(true);
 
-    // CPU Auto-reply
+    // Random Bot Auto-reply
     setTimeout(() => {
-      const replyMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: "こんにちは",
-        sender: "cpu",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => ({
-        ...prev,
-        [activeChannelId]: [...(prev[activeChannelId] || []), replyMessage],
-      }));
+      // Filter bots that are members of the current channel
+      const availableBots = channelMembers.filter(u => u.isBot);
+      
+      if (availableBots.length > 0) {
+        const randomBot = availableBots[Math.floor(Math.random() * availableBots.length)];
+        
+        const replyMessage = {
+          id: (Date.now() + 1).toString(),
+          text: "こんにちは",
+          senderId: randomBot.id,
+          channelId: activeChannelId,
+          timestamp: new Date(),
+        };
+        addMessage(replyMessage);
+      }
       setIsTyping(false);
     }, 1500);
+  };
+
+  const openCreateChannel = () => {
+    setChannelDialogMode("create");
+    setChannelDialogOpen(true);
+  };
+
+  const openEditChannel = () => {
+    setChannelDialogMode("edit");
+    setChannelDialogOpen(true);
+  };
+
+  const openAllUsers = () => {
+    setUserListIds(undefined);
+    setUserListTitle("All Users");
+    setUserListOpen(true);
+  };
+
+  const openChannelMembers = () => {
+    setUserListIds(activeChannel.members);
+    setUserListTitle(`#${activeChannel.name} Members`);
+    setUserListOpen(true);
   };
 
   return (
@@ -116,13 +120,17 @@ export default function ChatLayout() {
             <div>
               <div className="flex items-center justify-between px-2 mb-2 group">
                 <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Channels</h2>
-                <Plus size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 cursor-pointer hover:text-[var(--color-soft-blue)] transition-opacity" />
+                <Plus 
+                  size={14} 
+                  className="text-gray-400 opacity-0 group-hover:opacity-100 cursor-pointer hover:text-[var(--color-soft-blue)] transition-opacity" 
+                  onClick={openCreateChannel}
+                />
               </div>
               <div className="space-y-1">
                 {channels.map((channel) => (
                   <button
                     key={channel.id}
-                    onClick={() => setActiveChannelId(channel.id)}
+                    onClick={() => setActiveChannel(channel.id)}
                     className={cn(
                       "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ease-spring",
                       activeChannelId === channel.id
@@ -144,24 +152,45 @@ export default function ChatLayout() {
               </div>
             </div>
 
-            {/* Direct Messages Section (Mock) */}
+            {/* Direct Messages Section */}
             <div>
-              <div className="flex items-center justify-between px-2 mb-2 group">
-                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Direct Messages</h2>
-                <Plus size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 cursor-pointer hover:text-[var(--color-soft-blue)] transition-opacity" />
+              <div 
+                className="flex items-center justify-between px-2 mb-2 group cursor-pointer"
+                onClick={openAllUsers}
+              >
+                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider hover:text-[var(--color-soft-blue)] transition-colors">Direct Messages</h2>
+                <Users size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 hover:text-[var(--color-soft-blue)] transition-opacity" />
               </div>
               <div className="space-y-1">
-                {["Sarah", "Mike", "Design Bot"].map((name, i) => (
-                  <button key={i} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                {users.filter(u => u.id !== 'me').slice(0, 5).map((user) => (
+                  <button key={user.id} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
                     <div className="relative">
-                      <div className="w-2 h-2 rounded-full bg-green-400 absolute bottom-0 right-0 ring-2 ring-white"></div>
+                      <div className={`w-2 h-2 rounded-full absolute bottom-0 right-0 ring-2 ring-white ${
+                        user.status === 'online' ? 'bg-green-400' : 
+                        user.status === 'busy' ? 'bg-red-400' : 'bg-gray-300'
+                      }`}></div>
                       <Avatar className="w-6 h-6">
-                        <AvatarFallback className="text-[10px] bg-[var(--color-soft-cyan)] text-white">{name[0]}</AvatarFallback>
+                        {user.isBot ? (
+                          <div className="w-full h-full bg-[var(--color-soft-cyan)] flex items-center justify-center text-white text-[10px]">
+                            <Bot size={14} />
+                          </div>
+                        ) : (
+                          <AvatarImage src="https://github.com/shadcn.png" />
+                        )}
+                        <AvatarFallback className="text-[10px]">{user.name[0]}</AvatarFallback>
                       </Avatar>
                     </div>
-                    <span>{name}</span>
+                    <span className="truncate">{user.name}</span>
                   </button>
                 ))}
+                {users.length > 6 && (
+                  <button 
+                    onClick={openAllUsers}
+                    className="w-full text-left px-3 py-1 text-xs text-gray-400 hover:text-[var(--color-soft-blue)] transition-colors"
+                  >
+                    + {users.length - 6} more...
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -191,17 +220,39 @@ export default function ChatLayout() {
       >
         {/* Chat Header */}
         <header className="h-16 px-6 border-b border-gray-100 flex items-center justify-between bg-white/80 backdrop-blur-md z-10 sticky top-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors" onClick={openEditChannel}>
             <Hash className="text-gray-400" size={20} />
-            <h2 className="font-bold text-lg text-gray-800">{activeChannel.name}</h2>
+            <div>
+              <h2 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+                {activeChannel.name}
+                <ChevronDown size={14} className="text-gray-400" />
+              </h2>
+              {activeChannel.description && (
+                <p className="text-xs text-gray-400 truncate max-w-[300px]">{activeChannel.description}</p>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex -space-x-2">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-xs text-gray-500">
-                  U{i}
+            <div 
+              className="flex -space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={openChannelMembers}
+            >
+              {channelMembers.slice(0, 3).map((member) => (
+                <div key={member.id} className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center overflow-hidden">
+                  {member.isBot ? (
+                    <div className="w-full h-full bg-[var(--color-soft-cyan)] flex items-center justify-center text-white">
+                      <Bot size={14} />
+                    </div>
+                  ) : (
+                    <AvatarImage src="https://github.com/shadcn.png" />
+                  )}
                 </div>
               ))}
+              {channelMembers.length > 3 && (
+                <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-xs text-gray-500 font-bold">
+                  +{channelMembers.length - 3}
+                </div>
+              )}
             </div>
             <div className="h-4 w-px bg-gray-200"></div>
             <Search className="text-gray-400 cursor-pointer hover:text-gray-600" size={20} />
@@ -219,12 +270,21 @@ export default function ChatLayout() {
               <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center">
                 <Hash size={40} className="text-gray-300" />
               </div>
-              <p>This is the start of the <span className="font-bold text-gray-600">#{activeChannel.name}</span> channel.</p>
+              <div className="text-center">
+                <p className="text-lg font-bold text-gray-600">Welcome to #{activeChannel.name}!</p>
+                <p className="text-sm text-gray-400 mt-1">This is the start of the channel.</p>
+                {activeChannel.description && (
+                  <p className="text-sm text-[var(--color-soft-blue)] mt-2 bg-blue-50 px-3 py-1 rounded-full inline-block">
+                    Topic: {activeChannel.description}
+                  </p>
+                )}
+              </div>
             </div>
           ) : (
             currentMessages.map((msg, index) => {
-              const isMe = msg.sender === "user";
-              const showAvatar = index === 0 || currentMessages[index - 1].sender !== msg.sender;
+              const isMe = msg.senderId === "me";
+              const sender = users.find(u => u.id === msg.senderId);
+              const showAvatar = index === 0 || currentMessages[index - 1].senderId !== msg.senderId;
 
               return (
                 <motion.div
@@ -254,7 +314,7 @@ export default function ChatLayout() {
                   <div className={cn("flex flex-col gap-1", isMe ? "items-end" : "items-start")}>
                     {showAvatar && (
                       <span className="text-xs font-bold text-gray-500 ml-1">
-                        {isMe ? "You" : "CPU Bot"}
+                        {sender?.name || "Unknown"}
                       </span>
                     )}
                     <div
@@ -275,7 +335,6 @@ export default function ChatLayout() {
                         {format(msg.timestamp, "HH:mm")}
                       </span>
                     </div>
-                    {/* Visible Timestamp for mobile/always visible preference */}
                     <span className="text-[10px] text-gray-300 px-1">
                       {format(msg.timestamp, "HH:mm")}
                     </span>
@@ -347,6 +406,20 @@ export default function ChatLayout() {
           </div>
         </div>
       </motion.main>
+
+      {/* Dialogs */}
+      <ChannelDialog 
+        isOpen={channelDialogOpen} 
+        onClose={() => setChannelDialogOpen(false)} 
+        mode={channelDialogMode}
+        channelId={activeChannelId}
+      />
+      <UserListDialog
+        isOpen={userListOpen}
+        onClose={() => setUserListOpen(false)}
+        userIds={userListIds}
+        title={userListTitle}
+      />
     </div>
   );
 }
