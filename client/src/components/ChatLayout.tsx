@@ -39,6 +39,34 @@ export default function ChatLayout() {
     e?.preventDefault();
     if (!inputText.trim()) return;
 
+    const send = async () => {
+      const response = await fetch("/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channel_id: "hogehoge",
+          user_id: "fugafuga",
+          content: "piyopiyo",
+        }),
+      });
+
+      const data = await response.json();
+      console.log(data);
+    };
+
+    send();
+
+    const send2= async () => {
+      const response = await fetch("/messages", {
+        method: "GET",
+      });
+
+      const data = await response.json();
+      console.log(data);
+    };
+
+    send2();
+
     const newMessage = {
       id: Date.now().toString(),
       text: inputText,
