@@ -1,13 +1,13 @@
-import { useState, useEffect, useRef } from "react";
+import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { Send, Hash, Bot, Plus, Search, Bell, MoreVertical, Smile, ChevronDown, Users } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { useState, useEffect, useRef } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAppStore } from "@/lib/store";
+import { cn } from "@/lib/utils";
 import ChannelDialog from "./ChannelDialog";
 import UserListDialog from "./UserListDialog";
 
