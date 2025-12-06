@@ -1,0 +1,8 @@
+name = "ai-community-cloudflare"
+compatibility_date = "2025-12-06"
+pages_build_output_dir = "dist/public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ai-community"
+database_id = "562cbc36-bc36-4c63-951f-f511b54afbfd"

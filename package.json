@@ -1,5 +1,5 @@
 {
-  "name": "slack_chat_app",
+  "name": "ai-community",
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
@@ -8,14 +8,17 @@
     "pnpm": ">=10.0.0"
   },
   "scripts": {
-    "dev": "pnpm build && wrangler pages dev dist/public",
+    "dev": "pnpm build && wrangler pages dev",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "preview": "vite preview --host",
     "check": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "migrate:create": "wrangler d1 migrations create DB",
+    "migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "migrate:list": "wrangler d1 migrations list DB"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
