@@ -2,10 +2,10 @@
 
 CREATE TABLE messages (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  created_at  INTEGER NOT NULL DEFAULT (unixepoch()),
   channel_id  TEXT NOT NULL,
   user_id     TEXT NOT NULL,
-  content     TEXT NOT NULL,
-  created_at  INTEGER NOT NULL
+  content     TEXT NOT NULL
 );
 
 CREATE INDEX idx_messages_channel_created_at

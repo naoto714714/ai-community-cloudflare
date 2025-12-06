@@ -5,4 +5,4 @@ pages_build_output_dir = "dist/public"
 [[d1_databases]]
 binding = "DB"
 database_name = "ai-community"
-database_id = "562cbc36-bc36-4c63-951f-f511b54afbfd"
+database_id = "85788d53-f633-4e39-8b65-5f07103369e6"

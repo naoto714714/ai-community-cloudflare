@@ -17,6 +17,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "migrate:create": "wrangler d1 migrations create DB",
+    "migrate:local": "wrangler d1 migrations apply DB --local",
     "migrate:remote": "wrangler d1 migrations apply DB --remote",
     "migrate:list": "wrangler d1 migrations list DB"
   },
