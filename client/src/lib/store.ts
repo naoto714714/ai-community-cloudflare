@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
 // Types
 export type User = {
@@ -38,9 +38,30 @@ export const INITIAL_USERS: User[] = [
 
 // Mock Channels
 export const INITIAL_CHANNELS: Channel[] = [
-  { id: "c1", name: "雑談", description: "何でも自由に話せる場所", members: ["u1", "u2", "u3", "u4", "me"], unread: 0, type: "public" },
-  { id: "c2", name: "ゲーム", description: "ゲームに関する話題", members: ["u1", "u6", "me"], unread: 2, type: "public" },
-  { id: "c3", name: "ニュース", description: "最新のニュースや情報", members: ["u1", "u5", "me"], unread: 0, type: "public" },
+  {
+    id: "c1",
+    name: "雑談",
+    description: "何でも自由に話せる場所",
+    members: ["u1", "u2", "u3", "u4", "me"],
+    unread: 0,
+    type: "public",
+  },
+  {
+    id: "c2",
+    name: "ゲーム",
+    description: "ゲームに関する話題",
+    members: ["u1", "u6", "me"],
+    unread: 2,
+    type: "public",
+  },
+  {
+    id: "c3",
+    name: "ニュース",
+    description: "最新のニュースや情報",
+    members: ["u1", "u5", "me"],
+    unread: 0,
+    type: "public",
+  },
 ];
 
 // Store State
@@ -49,7 +70,7 @@ interface AppState {
   channels: Channel[];
   messages: Message[];
   activeChannelId: string;
-  
+
   // Actions
   setActiveChannel: (id: string) => void;
   addMessage: (message: Message) => void;
@@ -63,29 +84,40 @@ export const useAppStore = create<AppState>((set) => ({
   users: INITIAL_USERS,
   channels: INITIAL_CHANNELS,
   messages: [
-    { id: "m1", text: "こんにちは！雑談チャンネルへようこそ。", senderId: "u1", channelId: "c1", timestamp: new Date(Date.now() - 100000) }
+    {
+      id: "m1",
+      text: "こんにちは！雑談チャンネルへようこそ。",
+      senderId: "u1",
+      channelId: "c1",
+      timestamp: new Date(Date.now() - 100000),
+    },
   ],
   activeChannelId: "c1", // 初期チャンネルは「雑談」
 
   setActiveChannel: (id) => set({ activeChannelId: id }),
-  
-  addMessage: (message) => set((state) => ({ 
-    messages: [...state.messages, message] 
-  })),
-  
-  addChannel: (channel) => set((state) => ({ 
-    channels: [...state.channels, channel] 
-  })),
-  
-  updateChannel: (id, updates) => set((state) => ({
-    channels: state.channels.map(c => c.id === id ? { ...c, ...updates } : c)
-  })),
-  
-  addUser: (user) => set((state) => ({ 
-    users: [...state.users, user] 
-  })),
-  
-  removeUser: (id) => set((state) => ({ 
-    users: state.users.filter(u => u.id !== id) 
-  })),
+
+  addMessage: (message) =>
+    set((state) => ({
+      messages: [...state.messages, message],
+    })),
+
+  addChannel: (channel) =>
+    set((state) => ({
+      channels: [...state.channels, channel],
+    })),
+
+  updateChannel: (id, updates) =>
+    set((state) => ({
+      channels: state.channels.map((c) => (c.id === id ? { ...c, ...updates } : c)),
+    })),
+
+  addUser: (user) =>
+    set((state) => ({
+      users: [...state.users, user],
+    })),
+
+  removeUser: (id) =>
+    set((state) => ({
+      users: state.users.filter((u) => u.id !== id),
+    })),
 }));

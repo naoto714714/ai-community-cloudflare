@@ -13,10 +13,8 @@ interface UserListDialogProps {
 
 export default function UserListDialog({ isOpen, onClose, userIds, title = "All Users" }: UserListDialogProps) {
   const { users } = useAppStore();
-  
-  const displayUsers = userIds 
-    ? users.filter(u => userIds.includes(u.id))
-    : users;
+
+  const displayUsers = userIds ? users.filter((u) => userIds.includes(u.id)) : users;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -30,7 +28,7 @@ export default function UserListDialog({ isOpen, onClose, userIds, title = "All 
               <div key={user.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
                 <div className="relative">
                   <Avatar className="w-10 h-10 border border-gray-100">
-                    {user.id !== 'me' ? (
+                    {user.id !== "me" ? (
                       <div className="w-full h-full bg-[var(--color-soft-cyan)] flex items-center justify-center text-white">
                         <Bot size={20} />
                       </div>

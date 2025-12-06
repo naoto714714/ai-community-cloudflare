@@ -12,11 +12,8 @@ import ChannelDialog from "./ChannelDialog";
 import UserListDialog from "./UserListDialog";
 
 export default function ChatLayout() {
-  const { 
-    users, channels, messages, activeChannelId, 
-    setActiveChannel, addMessage 
-  } = useAppStore();
-  
+  const { users, channels, messages, activeChannelId, setActiveChannel, addMessage } = useAppStore();
+
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [channelDialogOpen, setChannelDialogOpen] = useState(false);
@@ -24,12 +21,12 @@ export default function ChatLayout() {
   const [userListOpen, setUserListOpen] = useState(false);
   const [userListIds, setUserListIds] = useState<string[] | undefined>(undefined);
   const [userListTitle, setUserListTitle] = useState("");
-  
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const activeChannel = channels.find((c) => c.id === activeChannelId) || channels[0];
-  const currentMessages = messages.filter(m => m.channelId === activeChannelId);
-  const channelMembers = users.filter(u => activeChannel.members.includes(u.id));
+  const currentMessages = messages.filter((m) => m.channelId === activeChannelId);
+  const channelMembers = users.filter((u) => activeChannel.members.includes(u.id));
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -57,11 +54,11 @@ export default function ChatLayout() {
     // Random Bot Auto-reply
     setTimeout(() => {
       // Filter bots (users who are not 'me') that are members of the current channel
-      const availableBots = channelMembers.filter(u => u.id !== 'me');
-      
+      const availableBots = channelMembers.filter((u) => u.id !== "me");
+
       if (availableBots.length > 0) {
         const randomBot = availableBots[Math.floor(Math.random() * availableBots.length)];
-        
+
         const replyMessage = {
           id: (Date.now() + 1).toString(),
           text: "こんにちは",
@@ -100,7 +97,7 @@ export default function ChatLayout() {
   return (
     <div className="flex h-screen w-full bg-[var(--color-soft-bg)] p-4 gap-4 overflow-hidden font-sans text-[var(--color-soft-text)]">
       {/* Sidebar - Floating Island */}
-      <motion.aside 
+      <motion.aside
         initial={{ x: -20, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         className="w-64 hidden md:flex flex-col bg-white rounded-[2rem] shadow-sm border border-white/50 backdrop-blur-sm overflow-hidden"
@@ -120,9 +117,9 @@ export default function ChatLayout() {
             <div>
               <div className="flex items-center justify-between px-2 mb-2 group">
                 <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Channels</h2>
-                <Plus 
-                  size={14} 
-                  className="text-gray-400 opacity-0 group-hover:opacity-100 cursor-pointer hover:text-[var(--color-soft-blue)] transition-opacity" 
+                <Plus
+                  size={14}
+                  className="text-gray-400 opacity-0 group-hover:opacity-100 cursor-pointer hover:text-[var(--color-soft-blue)] transition-opacity"
                   onClick={openCreateChannel}
                 />
               </div>
@@ -135,11 +132,14 @@ export default function ChatLayout() {
                       "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ease-spring",
                       activeChannelId === channel.id
                         ? "bg-[var(--color-soft-blue)] text-white shadow-md shadow-blue-200 scale-[1.02]"
-                        : "text-gray-600 hover:bg-gray-50 hover:scale-[1.01]"
+                        : "text-gray-600 hover:bg-gray-50 hover:scale-[1.01]",
                     )}
                   >
                     <div className="flex items-center gap-2.5">
-                      <Hash size={16} className={cn(activeChannelId === channel.id ? "text-blue-100" : "text-gray-400")} />
+                      <Hash
+                        size={16}
+                        className={cn(activeChannelId === channel.id ? "text-blue-100" : "text-gray-400")}
+                      />
                       <span className="truncate">{channel.name}</span>
                     </div>
                     {channel.unread > 0 && (
@@ -154,34 +154,42 @@ export default function ChatLayout() {
 
             {/* Direct Messages Section */}
             <div>
-              <div 
-                className="flex items-center justify-between px-2 mb-2 group cursor-pointer"
-                onClick={openAllUsers}
-              >
-                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider hover:text-[var(--color-soft-blue)] transition-colors">Direct Messages</h2>
-                <Users size={14} className="text-gray-400 opacity-0 group-hover:opacity-100 hover:text-[var(--color-soft-blue)] transition-opacity" />
+              <div className="flex items-center justify-between px-2 mb-2 group cursor-pointer" onClick={openAllUsers}>
+                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider hover:text-[var(--color-soft-blue)] transition-colors">
+                  Direct Messages
+                </h2>
+                <Users
+                  size={14}
+                  className="text-gray-400 opacity-0 group-hover:opacity-100 hover:text-[var(--color-soft-blue)] transition-opacity"
+                />
               </div>
               <div className="space-y-1">
-                {users.filter(u => u.id !== 'me').slice(0, 5).map((user) => (
-                  <button key={user.id} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
-                    <div className="relative">
-                      <div className="w-2 h-2 rounded-full absolute bottom-0 right-0 ring-2 ring-white bg-gray-300"></div>
-                      <Avatar className="w-6 h-6">
-                        {user.id !== 'me' ? (
-                          <div className="w-full h-full bg-[var(--color-soft-cyan)] flex items-center justify-center text-white text-[10px]">
-                            <Bot size={14} />
-                          </div>
-                        ) : (
-                          <AvatarImage src="https://github.com/shadcn.png" />
-                        )}
-                        <AvatarFallback className="text-[10px]">{user.name[0]}</AvatarFallback>
-                      </Avatar>
-                    </div>
-                    <span className="truncate">{user.name}</span>
-                  </button>
-                ))}
+                {users
+                  .filter((u) => u.id !== "me")
+                  .slice(0, 5)
+                  .map((user) => (
+                    <button
+                      key={user.id}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="relative">
+                        <div className="w-2 h-2 rounded-full absolute bottom-0 right-0 ring-2 ring-white bg-gray-300"></div>
+                        <Avatar className="w-6 h-6">
+                          {user.id !== "me" ? (
+                            <div className="w-full h-full bg-[var(--color-soft-cyan)] flex items-center justify-center text-white text-[10px]">
+                              <Bot size={14} />
+                            </div>
+                          ) : (
+                            <AvatarImage src="https://github.com/shadcn.png" />
+                          )}
+                          <AvatarFallback className="text-[10px]">{user.name[0]}</AvatarFallback>
+                        </Avatar>
+                      </div>
+                      <span className="truncate">{user.name}</span>
+                    </button>
+                  ))}
                 {users.length > 6 && (
-                  <button 
+                  <button
                     onClick={openAllUsers}
                     className="w-full text-left px-3 py-1 text-xs text-gray-400 hover:text-[var(--color-soft-blue)] transition-colors"
                   >
@@ -209,7 +217,7 @@ export default function ChatLayout() {
       </motion.aside>
 
       {/* Main Chat Area - Floating Island */}
-      <motion.main 
+      <motion.main
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
@@ -217,7 +225,10 @@ export default function ChatLayout() {
       >
         {/* Chat Header */}
         <header className="h-16 px-6 border-b border-gray-100 flex items-center justify-between bg-white/80 backdrop-blur-md z-10 sticky top-0">
-          <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors" onClick={openEditChannel}>
+          <div
+            className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+            onClick={openEditChannel}
+          >
             <Hash className="text-gray-400" size={20} />
             <div>
               <h2 className="font-bold text-lg text-gray-800 flex items-center gap-2">
@@ -230,13 +241,16 @@ export default function ChatLayout() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <div 
+            <div
               className="flex -space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
               onClick={openChannelMembers}
             >
               {channelMembers.slice(0, 3).map((member) => (
-                <div key={member.id} className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center overflow-hidden">
-                  {member.id !== 'me' ? (
+                <div
+                  key={member.id}
+                  className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center overflow-hidden"
+                >
+                  {member.id !== "me" ? (
                     <div className="w-full h-full bg-[var(--color-soft-cyan)] flex items-center justify-center text-white">
                       <Bot size={14} />
                     </div>
@@ -261,10 +275,7 @@ export default function ChatLayout() {
         </header>
 
         {/* Messages Area */}
-        <div 
-          ref={scrollRef}
-          className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth"
-        >
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth">
           {currentMessages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-gray-400 space-y-4">
               <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center">
@@ -283,7 +294,7 @@ export default function ChatLayout() {
           ) : (
             currentMessages.map((msg, index) => {
               const isMe = msg.senderId === "me";
-              const sender = users.find(u => u.id === msg.senderId);
+              const sender = users.find((u) => u.id === msg.senderId);
               const showAvatar = index === 0 || currentMessages[index - 1].senderId !== msg.senderId;
 
               return (
@@ -292,10 +303,7 @@ export default function ChatLayout() {
                   initial={{ opacity: 0, y: 20, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                  className={cn(
-                    "flex gap-3 max-w-[80%]",
-                    isMe ? "ml-auto flex-row-reverse" : ""
-                  )}
+                  className={cn("flex gap-3 max-w-[80%]", isMe ? "ml-auto flex-row-reverse" : "")}
                 >
                   {/* Avatar */}
                   <div className={cn("w-10 h-10 flex-shrink-0", !showAvatar && "opacity-0")}>
@@ -314,9 +322,7 @@ export default function ChatLayout() {
                   <div className={cn("flex flex-col gap-1", isMe ? "items-end" : "items-start")}>
                     {showAvatar && (
                       <div className="flex items-baseline gap-2 ml-1">
-                        <span className="text-xs font-bold text-gray-500">
-                          {sender?.name || "Unknown"}
-                        </span>
+                        <span className="text-xs font-bold text-gray-500">{sender?.name || "Unknown"}</span>
                         {!isMe && sender?.personality && (
                           <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">
                             {sender.personality}
@@ -329,33 +335,27 @@ export default function ChatLayout() {
                         "px-5 py-3 rounded-2xl shadow-sm text-[15px] leading-relaxed relative group transition-all duration-200 hover:shadow-md",
                         isMe
                           ? "bg-[var(--color-soft-blue)] text-white rounded-tr-none"
-                          : "bg-[var(--color-soft-gray)] text-gray-800 rounded-tl-none"
+                          : "bg-[var(--color-soft-gray)] text-gray-800 rounded-tl-none",
                       )}
                     >
                       {msg.text}
-                      <span 
+                      <span
                         className={cn(
                           "text-[10px] absolute bottom-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap",
-                          isMe ? "right-full mr-2 text-gray-400" : "left-full ml-2 text-gray-400"
+                          isMe ? "right-full mr-2 text-gray-400" : "left-full ml-2 text-gray-400",
                         )}
                       >
                         {format(msg.timestamp, "HH:mm")}
                       </span>
                     </div>
-                    <span className="text-[10px] text-gray-300 px-1">
-                      {format(msg.timestamp, "HH:mm")}
-                    </span>
+                    <span className="text-[10px] text-gray-300 px-1">{format(msg.timestamp, "HH:mm")}</span>
                   </div>
                 </motion.div>
               );
             })
           )}
           {isTyping && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex gap-3"
-            >
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex gap-3">
               <div className="w-10 h-10 flex-shrink-0">
                 <div className="w-full h-full bg-[var(--color-soft-cyan)] rounded-full flex items-center justify-center text-white">
                   <Bot size={20} />
@@ -372,34 +372,44 @@ export default function ChatLayout() {
 
         {/* Input Area */}
         <div className="p-6 pt-2 bg-white">
-          <form 
+          <form
             onSubmit={handleSendMessage}
             className="relative flex items-center gap-2 bg-gray-50 p-2 rounded-[1.5rem] border border-gray-200 focus-within:border-[var(--color-soft-blue)] focus-within:ring-4 focus-within:ring-blue-50 transition-all duration-300"
           >
-            <Button type="button" variant="ghost" size="icon" className="rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-200">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-200"
+            >
               <Plus size={20} />
             </Button>
-            
+
             <Input
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder={`Message #${activeChannel.name}`}
               className="flex-1 border-none bg-transparent shadow-none focus-visible:ring-0 text-base placeholder:text-gray-400 h-12"
             />
-            
+
             <div className="flex items-center gap-1 pr-1">
-              <Button type="button" variant="ghost" size="icon" className="rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-200">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-200"
+              >
                 <Smile size={20} />
               </Button>
-              <Button 
-                type="submit" 
-                size="icon" 
+              <Button
+                type="submit"
+                size="icon"
                 disabled={!inputText.trim()}
                 className={cn(
                   "rounded-full w-10 h-10 transition-all duration-300 ease-spring",
-                  inputText.trim() 
-                    ? "bg-[var(--color-soft-blue)] hover:bg-blue-600 text-white shadow-lg shadow-blue-200 hover:scale-110 active:scale-95" 
-                    : "bg-gray-200 text-gray-400"
+                  inputText.trim()
+                    ? "bg-[var(--color-soft-blue)] hover:bg-blue-600 text-white shadow-lg shadow-blue-200 hover:scale-110 active:scale-95"
+                    : "bg-gray-200 text-gray-400",
                 )}
               >
                 <Send size={18} className={cn(inputText.trim() && "ml-0.5")} />
@@ -415,9 +425,9 @@ export default function ChatLayout() {
       </motion.main>
 
       {/* Dialogs */}
-      <ChannelDialog 
-        isOpen={channelDialogOpen} 
-        onClose={() => setChannelDialogOpen(false)} 
+      <ChannelDialog
+        isOpen={channelDialogOpen}
+        onClose={() => setChannelDialogOpen(false)}
         mode={channelDialogMode}
         channelId={activeChannelId}
       />
