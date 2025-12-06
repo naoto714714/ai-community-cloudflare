@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import path from "path";
 import { jsxLocPlugin } from "@builder.io/vite-plugin-jsx-loc";
 import tailwindcss from "@tailwindcss/vite";
