@@ -24,7 +24,7 @@ export default function ChannelDialog({ isOpen, onClose, mode, channelId }: Chan
   useEffect(() => {
     if (isOpen) {
       if (mode === "edit" && channelId) {
-        const channel = channels.find(c => c.id === channelId);
+        const channel = channels.find((c) => c.id === channelId);
         if (channel) {
           setName(channel.name);
           setDescription(channel.description);
@@ -48,24 +48,20 @@ export default function ChannelDialog({ isOpen, onClose, mode, channelId }: Chan
         description: description.trim(),
         members: selectedMembers,
         unread: 0,
-        type: "public"
+        type: "public",
       };
       addChannel(newChannel);
     } else if (mode === "edit" && channelId) {
       updateChannel(channelId, {
         description: description.trim(),
-        members: selectedMembers
+        members: selectedMembers,
       });
     }
     onClose();
   };
 
   const toggleMember = (userId: string) => {
-    setSelectedMembers(prev => 
-      prev.includes(userId) 
-        ? prev.filter(id => id !== userId)
-        : [...prev, userId]
-    );
+    setSelectedMembers((prev) => (prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]));
   };
 
   return (
@@ -98,20 +94,22 @@ export default function ChannelDialog({ isOpen, onClose, mode, channelId }: Chan
             <Label>Members</Label>
             <ScrollArea className="h-[200px] border rounded-md p-2">
               <div className="space-y-2">
-                {users.filter(u => u.id !== 'me').map((user) => (
-                  <div key={user.id} className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={`user-${user.id}`} 
-                      checked={selectedMembers.includes(user.id)}
-                      onCheckedChange={() => toggleMember(user.id)}
-                    />
-                    <Label htmlFor={`user-${user.id}`} className="cursor-pointer flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-gray-300" />
-                      {user.name}
-                      <span className="text-xs text-gray-400">({user.personality})</span>
-                    </Label>
-                  </div>
-                ))}
+                {users
+                  .filter((u) => u.id !== "me")
+                  .map((user) => (
+                    <div key={user.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`user-${user.id}`}
+                        checked={selectedMembers.includes(user.id)}
+                        onCheckedChange={() => toggleMember(user.id)}
+                      />
+                      <Label htmlFor={`user-${user.id}`} className="cursor-pointer flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-gray-300" />
+                        {user.name}
+                        <span className="text-xs text-gray-400">({user.personality})</span>
+                      </Label>
+                    </div>
+                  ))}
               </div>
             </ScrollArea>
           </div>
