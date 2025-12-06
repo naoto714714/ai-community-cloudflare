@@ -5,8 +5,7 @@ export type User = {
   id: string;
   name: string;
   avatar?: string;
-  status: "online" | "offline" | "busy";
-  isBot: boolean;
+  personality: string; // status/isBotの代わりにpersonalityを追加
 };
 
 export type Channel = {
@@ -26,23 +25,22 @@ export type Message = {
   timestamp: Date;
 };
 
-// Mock Users (Bots)
+// Mock Users (All are bots except 'me')
 export const INITIAL_USERS: User[] = [
-  { id: "u1", name: "Sarah", status: "online", isBot: true },
-  { id: "u2", name: "Mike", status: "busy", isBot: true },
-  { id: "u3", name: "Design Bot", status: "online", isBot: true },
-  { id: "u4", name: "Dev Bot", status: "offline", isBot: true },
-  { id: "u5", name: "QA Bot", status: "online", isBot: true },
-  { id: "u6", name: "Manager Bot", status: "busy", isBot: true },
-  { id: "u7", name: "HR Bot", status: "offline", isBot: true },
-  { id: "me", name: "You", status: "online", isBot: false },
+  { id: "u1", name: "Sarah", personality: "Cheerful & Helpful" },
+  { id: "u2", name: "Mike", personality: "Sarcastic & Witty" },
+  { id: "u3", name: "Design Bot", personality: "Creative & Artistic" },
+  { id: "u4", name: "Dev Bot", personality: "Logical & Precise" },
+  { id: "u5", name: "News Bot", personality: "Informative & Neutral" },
+  { id: "u6", name: "Game Bot", personality: "Playful & Competitive" },
+  { id: "me", name: "You", personality: "User" },
 ];
 
 // Mock Channels
 export const INITIAL_CHANNELS: Channel[] = [
-  { id: "c1", name: "general", description: "General discussion for everyone", members: ["u1", "u2", "u3", "me"], unread: 0, type: "public" },
-  { id: "c2", name: "random", description: "Random fun stuff", members: ["u1", "u4", "me"], unread: 2, type: "public" },
-  { id: "c3", name: "design-team", description: "Design related topics", members: ["u1", "u3", "me"], unread: 0, type: "public" },
+  { id: "c1", name: "雑談", description: "何でも自由に話せる場所", members: ["u1", "u2", "u3", "u4", "me"], unread: 0, type: "public" },
+  { id: "c2", name: "ゲーム", description: "ゲームに関する話題", members: ["u1", "u6", "me"], unread: 2, type: "public" },
+  { id: "c3", name: "ニュース", description: "最新のニュースや情報", members: ["u1", "u5", "me"], unread: 0, type: "public" },
 ];
 
 // Store State
@@ -65,9 +63,9 @@ export const useAppStore = create<AppState>((set) => ({
   users: INITIAL_USERS,
   channels: INITIAL_CHANNELS,
   messages: [
-    { id: "m1", text: "Welcome to general!", senderId: "u3", channelId: "c1", timestamp: new Date(Date.now() - 100000) }
+    { id: "m1", text: "こんにちは！雑談チャンネルへようこそ。", senderId: "u1", channelId: "c1", timestamp: new Date(Date.now() - 100000) }
   ],
-  activeChannelId: "c1",
+  activeChannelId: "c1", // 初期チャンネルは「雑談」
 
   setActiveChannel: (id) => set({ activeChannelId: id }),
   

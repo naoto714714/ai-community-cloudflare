@@ -56,8 +56,8 @@ export default function ChatLayout() {
 
     // Random Bot Auto-reply
     setTimeout(() => {
-      // Filter bots that are members of the current channel
-      const availableBots = channelMembers.filter(u => u.isBot);
+      // Filter bots (users who are not 'me') that are members of the current channel
+      const availableBots = channelMembers.filter(u => u.id !== 'me');
       
       if (availableBots.length > 0) {
         const randomBot = availableBots[Math.floor(Math.random() * availableBots.length)];
@@ -165,12 +165,9 @@ export default function ChatLayout() {
                 {users.filter(u => u.id !== 'me').slice(0, 5).map((user) => (
                   <button key={user.id} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
                     <div className="relative">
-                      <div className={`w-2 h-2 rounded-full absolute bottom-0 right-0 ring-2 ring-white ${
-                        user.status === 'online' ? 'bg-green-400' : 
-                        user.status === 'busy' ? 'bg-red-400' : 'bg-gray-300'
-                      }`}></div>
+                      <div className="w-2 h-2 rounded-full absolute bottom-0 right-0 ring-2 ring-white bg-gray-300"></div>
                       <Avatar className="w-6 h-6">
-                        {user.isBot ? (
+                        {user.id !== 'me' ? (
                           <div className="w-full h-full bg-[var(--color-soft-cyan)] flex items-center justify-center text-white text-[10px]">
                             <Bot size={14} />
                           </div>
@@ -205,7 +202,7 @@ export default function ChatLayout() {
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-gray-700 truncate">You</p>
-              <p className="text-xs text-gray-400 truncate">Online</p>
+              <p className="text-xs text-gray-400 truncate">User</p>
             </div>
           </div>
         </div>
@@ -239,12 +236,15 @@ export default function ChatLayout() {
             >
               {channelMembers.slice(0, 3).map((member) => (
                 <div key={member.id} className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center overflow-hidden">
-                  {member.isBot ? (
+                  {member.id !== 'me' ? (
                     <div className="w-full h-full bg-[var(--color-soft-cyan)] flex items-center justify-center text-white">
                       <Bot size={14} />
                     </div>
                   ) : (
-                    <AvatarImage src="https://github.com/shadcn.png" />
+                    <Avatar className="w-full h-full">
+                      <AvatarImage src="https://github.com/shadcn.png" />
+                      <AvatarFallback>ME</AvatarFallback>
+                    </Avatar>
                   )}
                 </div>
               ))}
@@ -313,9 +313,16 @@ export default function ChatLayout() {
                   {/* Message Bubble */}
                   <div className={cn("flex flex-col gap-1", isMe ? "items-end" : "items-start")}>
                     {showAvatar && (
-                      <span className="text-xs font-bold text-gray-500 ml-1">
-                        {sender?.name || "Unknown"}
-                      </span>
+                      <div className="flex items-baseline gap-2 ml-1">
+                        <span className="text-xs font-bold text-gray-500">
+                          {sender?.name || "Unknown"}
+                        </span>
+                        {!isMe && sender?.personality && (
+                          <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                            {sender.personality}
+                          </span>
+                        )}
+                      </div>
                     )}
                     <div
                       className={cn(

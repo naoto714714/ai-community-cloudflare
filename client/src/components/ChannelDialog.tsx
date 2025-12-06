@@ -98,7 +98,7 @@ export default function ChannelDialog({ isOpen, onClose, mode, channelId }: Chan
             <Label>Members</Label>
             <ScrollArea className="h-[200px] border rounded-md p-2">
               <div className="space-y-2">
-                {users.filter(u => u.isBot).map((user) => (
+                {users.filter(u => u.id !== 'me').map((user) => (
                   <div key={user.id} className="flex items-center space-x-2">
                     <Checkbox 
                       id={`user-${user.id}`} 
@@ -106,8 +106,9 @@ export default function ChannelDialog({ isOpen, onClose, mode, channelId }: Chan
                       onCheckedChange={() => toggleMember(user.id)}
                     />
                     <Label htmlFor={`user-${user.id}`} className="cursor-pointer flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${user.status === 'online' ? 'bg-green-500' : 'bg-gray-300'}`} />
+                      <span className="w-2 h-2 rounded-full bg-gray-300" />
                       {user.name}
+                      <span className="text-xs text-gray-400">({user.personality})</span>
                     </Label>
                   </div>
                 ))}

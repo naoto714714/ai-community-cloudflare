@@ -30,7 +30,7 @@ export default function UserListDialog({ isOpen, onClose, userIds, title = "All 
               <div key={user.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
                 <div className="relative">
                   <Avatar className="w-10 h-10 border border-gray-100">
-                    {user.isBot ? (
+                    {user.id !== 'me' ? (
                       <div className="w-full h-full bg-[var(--color-soft-cyan)] flex items-center justify-center text-white">
                         <Bot size={20} />
                       </div>
@@ -39,14 +39,10 @@ export default function UserListDialog({ isOpen, onClose, userIds, title = "All 
                     )}
                     <AvatarFallback>{user.name[0]}</AvatarFallback>
                   </Avatar>
-                  <span className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full ${
-                    user.status === 'online' ? 'bg-green-500' : 
-                    user.status === 'busy' ? 'bg-red-500' : 'bg-gray-300'
-                  }`} />
                 </div>
                 <div>
                   <p className="font-medium text-gray-900">{user.name}</p>
-                  <p className="text-xs text-gray-500 capitalize">{user.isBot ? 'Bot' : 'User'} • {user.status}</p>
+                  <p className="text-xs text-gray-500">{user.personality}</p>
                 </div>
               </div>
             ))}
