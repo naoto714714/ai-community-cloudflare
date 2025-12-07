@@ -49,7 +49,7 @@ GEMINI_API_KEY="your-gemini-api-key"
 
 ## ユーザーの追加方法（Markdown管理）
 
-1. `client/public/users/` に `003_newuser.md` のような連番ファイルを追加する。
+1. `client/src/users/` に `003_newuser.md` のような連番ファイルを追加する。
 2. 先頭に frontmatter を書く:
    ```md
    ---
@@ -59,4 +59,4 @@ GEMINI_API_KEY="your-gemini-api-key"
    ---
    ```
    本文は任意で空でもOK。
-3. `client/src/lib/user-api.ts` の `USER_FILES` 配列にファイルパスを追加する。
+3. 追加・変更後はフロントエンドを再ビルド／リロードすれば反映される（`import.meta.glob` で自動列挙されるため配列追記は不要）。

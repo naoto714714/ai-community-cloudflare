@@ -1,7 +1,7 @@
 import { User } from "./store";
 
-// 管理対象のユーザーファイルは手動で追加・更新する
-const USER_FILES = ["/users/001_me.md", "/users/002_gemini.md"] as const;
+// ユーザーファイルを列挙
+const modules = import.meta.glob("../users/*.md", { eager: true, as: "raw" });
 
 type Frontmatter = {
   id?: number;
@@ -43,37 +43,25 @@ const normalizeUser = (fm: Frontmatter): User | null => {
   if (!name) return null;
 
   return {
-    id: name, // frontmatterの name を識別子として利用
+    id: name, // frontmatter の name を識別子として利用
     name,
     personality: fm.personality ?? "",
   };
 };
 
 export const fetchUsers = async (): Promise<User[]> => {
-  const results = await Promise.all(
-    USER_FILES.map(async (path) => {
-      try {
-        const res = await fetch(path);
-        if (!res.ok) throw new Error(`fetch failed: ${res.status}`);
-        const text = await res.text();
-        const fm = parseFrontmatter(text);
-        return normalizeUser(fm);
-      } catch (e) {
-        console.error(`Failed to load user file: ${path}`, e);
-        return null;
-      }
-    }),
-  );
+  const entries = Object.values(modules) as string[];
+  const parsed = entries
+    .map(parseFrontmatter)
+    .map(normalizeUser)
+    .filter((u): u is User => Boolean(u));
 
-  const normalized = results.filter((u): u is User => Boolean(u));
-
-  // 最低限のフェイルセーフ
-  if (normalized.length === 0) {
+  if (parsed.length === 0) {
     return [
       { id: "me", name: "me", personality: "User" },
       { id: "gemini", name: "gemini", personality: "AI Assistant" },
     ];
   }
 
-  return normalized;
+  return parsed;
 };
