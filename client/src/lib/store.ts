@@ -5,7 +5,7 @@ export type User = {
   id: string;
   name: string;
   avatar?: string;
-  personality: string; // status/isBotの代わりにpersonalityを追加
+  personality: string;
 };
 
 export type Channel = {
