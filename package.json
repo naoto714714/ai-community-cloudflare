@@ -1,5 +1,5 @@
 {
-  "name": "slack_chat_app",
+  "name": "ai-community",
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
@@ -8,16 +8,21 @@
     "pnpm": ">=10.0.0"
   },
   "scripts": {
-    "dev": "vite --host",
+    "dev": "pnpm build && wrangler pages dev",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "preview": "vite preview --host",
     "check": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "migrate:create": "wrangler d1 migrations create DB",
+    "migrate:local": "wrangler d1 migrations apply DB --local",
+    "migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "migrate:list": "wrangler d1 migrations list DB"
   },
   "dependencies": {
+    "@google/genai": "^1.31.0",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -102,7 +107,8 @@
     "typescript-eslint": "^8.48.1",
     "vite": "^7.1.7",
     "vite-plugin-manus-runtime": "^0.0.56",
-    "vitest": "^2.1.4"
+    "vitest": "^2.1.4",
+    "wrangler": "^4.53.0"
   },
   "packageManager": "pnpm@10.24.0+sha512.01ff8ae71b4419903b65c60fb2dc9d34cf8bb6e06d03bde112ef38f7a34d6904c424ba66bea5cdcf12890230bf39f9580473140ed9c946fef328b6e5238a345a",
   "pnpm": {
@@ -111,6 +117,11 @@
     },
     "overrides": {
       "tailwindcss>nanoid": "3.3.7"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "workerd"
+    ]
   }
 }
