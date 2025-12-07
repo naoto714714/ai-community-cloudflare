@@ -257,7 +257,7 @@ export default function ChatLayout() {
       >
         {/* Workspace Header */}
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-          <h1 className="font-bold text-xl tracking-tight text-[var(--color-soft-blue)]">SoftChat</h1>
+          <h1 className="font-bold text-xl tracking-tight text-[var(--color-soft-blue)]">AI Community</h1>
           <Button variant="ghost" size="icon" className="rounded-full hover:bg-[var(--color-soft-bg)] text-gray-400">
             <Bell size={18} />
           </Button>
@@ -299,69 +299,25 @@ export default function ChatLayout() {
                 ))}
               </div>
             </div>
-
-            {/* Direct Messages Section */}
-            <div>
-              <div className="flex items-center justify-between px-2 mb-2 group cursor-pointer" onClick={openAllUsers}>
-                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider hover:text-[var(--color-soft-blue)] transition-colors">
-                  Direct Messages
-                </h2>
-                <Users
-                  size={14}
-                  className="text-gray-400 opacity-0 group-hover:opacity-100 hover:text-[var(--color-soft-blue)] transition-opacity"
-                />
-              </div>
-              <div className="space-y-1">
-                {users
-                  .filter((u) => u.id !== "me")
-                  .slice(0, 5)
-                  .map((user) => (
-                    <button
-                      key={user.id}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="relative">
-                        <div className="w-2 h-2 rounded-full absolute bottom-0 right-0 ring-2 ring-white bg-gray-300"></div>
-                        <Avatar className="w-6 h-6">
-                          {user.id !== "me" ? (
-                            <div className="w-full h-full bg-[var(--color-soft-cyan)] flex items-center justify-center text-white text-[10px]">
-                              <Bot size={14} />
-                            </div>
-                          ) : (
-                            <AvatarImage src="https://github.com/shadcn.png" />
-                          )}
-                          <AvatarFallback className="text-[10px]">{user.name[0]}</AvatarFallback>
-                        </Avatar>
-                      </div>
-                      <span className="truncate">{user.name}</span>
-                    </button>
-                  ))}
-                {users.length > 6 && (
-                  <button
-                    onClick={openAllUsers}
-                    className="w-full text-left px-3 py-1 text-xs text-gray-400 hover:text-[var(--color-soft-blue)] transition-colors"
-                  >
-                    + {users.length - 6} more...
-                  </button>
-                )}
-              </div>
-            </div>
           </div>
         </ScrollArea>
 
         {/* User Profile */}
-        <div className="p-4 border-t border-gray-100 bg-gray-50/50">
+        <button
+          type="button"
+          onClick={openAllUsers}
+          className="p-4 border-t border-gray-100 bg-gray-50/50 w-full text-left hover:bg-gray-100 transition-colors"
+        >
           <div className="flex items-center gap-3">
-            <Avatar className="w-9 h-9 border-2 border-white shadow-sm">
-              <AvatarImage src="https://github.com/shadcn.png" />
-              <AvatarFallback>ME</AvatarFallback>
-            </Avatar>
+            <div className="w-9 h-9 rounded-full bg-[var(--color-soft-cyan)] text-white flex items-center justify-center border-2 border-white shadow-sm">
+              <Users size={18} />
+            </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-gray-700 truncate">You</p>
-              <p className="text-xs text-gray-400 truncate">User</p>
+              <p className="text-sm font-bold text-gray-700 truncate">All Users</p>
+              <p className="text-xs text-gray-400 truncate">メンバー一覧を開く</p>
             </div>
           </div>
-        </div>
+        </button>
       </motion.aside>
 
       {/* Main Chat Area - Floating Island */}
