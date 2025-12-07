@@ -16,15 +16,16 @@ interface ChannelDialogProps {
 }
 
 export default function ChannelDialog({ isOpen, onClose, mode, channelId }: ChannelDialogProps) {
-  const { users, channels, addChannel, updateChannel } = useAppStore();
+  const { users, channels, setChannels, setActiveChannel } = useAppStore();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       if (mode === "edit" && channelId) {
-        const channel = channels.find((c) => c.id === channelId);
+        const channel = channels.find((c) => c.name === channelId);
         if (channel) {
           setName(channel.name);
           setDescription(channel.description);
@@ -38,26 +39,84 @@ export default function ChannelDialog({ isOpen, onClose, mode, channelId }: Chan
     }
   }, [isOpen, mode, channelId, channels]);
 
-  const handleSubmit = () => {
-    if (!name.trim()) return;
+  const normalizeChannel = (c: unknown): Channel => {
+    const record = (c && typeof c === "object") ? (c as Record<string, unknown>) : {};
 
-    if (mode === "create") {
-      const newChannel: Channel = {
-        id: Date.now().toString(),
-        name: name.trim(),
-        description: description.trim(),
-        members: selectedMembers,
-        unread: 0,
-        type: "public",
-      };
-      addChannel(newChannel);
-    } else if (mode === "edit" && channelId) {
-      updateChannel(channelId, {
-        description: description.trim(),
-        members: selectedMembers,
-      });
+    const membersRaw = record.members;
+    const members = Array.isArray(membersRaw) ? membersRaw.map(String) : [];
+
+    return {
+      id: String(record.id ?? crypto.randomUUID?.() ?? Date.now()),
+      name: String(record.channel_id ?? record.name ?? ""),
+      description: String(record.description ?? ""),
+      members,
+    };
+  };
+
+  const refreshChannels = async (selectName?: string) => {
+    try {
+      const res = await fetch("/channels");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!Array.isArray(data)) return;
+      const normalized = data.map(normalizeChannel);
+      setChannels(normalized);
+      if (selectName && normalized.some((c) => c.name === selectName)) {
+        setActiveChannel(selectName);
+      }
+    } catch (error) {
+      console.error("Refresh channels failed", error);
     }
-    onClose();
+  };
+
+  const handleSubmit = async () => {
+    if (!name.trim() || submitting) return;
+
+    const payloadMembers = Array.from(new Set([...selectedMembers, "me"]));
+
+    setSubmitting(true);
+    try {
+      if (mode === "create") {
+        const res = await fetch("/channels", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            channel_id: name.trim(),
+            description: description.trim(),
+            members: payloadMembers,
+          }),
+        });
+
+        if (!res.ok) {
+          console.error("Create channel failed", res.status);
+        } else {
+          const created = await res.json();
+          const newName = created?.channel_id ? String(created.channel_id) : name.trim();
+          await refreshChannels(newName);
+        }
+      } else if (mode === "edit" && channelId) {
+        const res = await fetch("/channels", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            channel_id: name.trim(),
+            description: description.trim(),
+            members: payloadMembers,
+          }),
+        });
+
+        if (!res.ok) {
+          console.error("Update channel failed", res.status);
+        } else {
+          await refreshChannels(channelId);
+        }
+      }
+    } catch (error) {
+      console.error("Channel submit error", error);
+    } finally {
+      setSubmitting(false);
+      onClose();
+    }
   };
 
   const toggleMember = (userId: string) => {
@@ -115,7 +174,9 @@ export default function ChannelDialog({ isOpen, onClose, mode, channelId }: Chan
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleSubmit}>{mode === "create" ? "Create" : "Save Changes"}</Button>
+          <Button onClick={handleSubmit} disabled={submitting}>
+            {submitting ? "Saving..." : mode === "create" ? "Create" : "Save Changes"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

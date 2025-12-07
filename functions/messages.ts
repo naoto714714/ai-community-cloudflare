@@ -25,7 +25,7 @@ export async function onRequestPost(context) {
   let body;
   try {
     body = await request.json();
-  } catch (e) {
+  } catch {
     return new Response("Invalid JSON", { status: 400 });
   }
 

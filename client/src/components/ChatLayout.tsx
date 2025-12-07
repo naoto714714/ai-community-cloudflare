@@ -15,7 +15,7 @@ const DEFAULT_AUTO_CHAT_INTERVAL_SEC = 60;
 const GEMINI_USER_ID = "gemini";
 
 export default function ChatLayout() {
-  const { users, channels, messages, activeChannelId, setActiveChannel, addMessage, setMessagesForChannel } =
+  const { users, channels, messages, activeChannelId, setActiveChannel, setChannels, addMessage, setMessagesForChannel } =
     useAppStore();
 
   const [inputText, setInputText] = useState("");
@@ -28,9 +28,53 @@ export default function ChatLayout() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const activeChannel = channels.find((c) => c.id === activeChannelId) || channels[0];
-  const currentMessages = messages.filter((m) => m.channelId === activeChannelId);
-  const channelMembers = users.filter((u) => activeChannel.members.includes(u.id));
+  const activeChannel = channels.find((c) => c.name === activeChannelId) || channels[0];
+  const currentMessages = activeChannel ? messages.filter((m) => m.channelId === activeChannel.name) : [];
+  const channelMembers = activeChannel ? users.filter((u) => activeChannel.members.includes(u.id)) : [];
+
+  const normalizeChannel = (c: unknown): Channel => {
+    const record = c && typeof c === "object" ? (c as Record<string, unknown>) : {};
+    const membersRaw = record.members;
+    return {
+      id: String(record.id ?? crypto.randomUUID?.() ?? Date.now()),
+      name: String(record.channel_id ?? record.name ?? ""),
+      description: String(record.description ?? ""),
+      members: Array.isArray(membersRaw) ? membersRaw.map(String) : [],
+    };
+  };
+
+  // 初期ロード: チャンネル一覧取得
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadChannels = async () => {
+      try {
+        const res = await fetch("/channels", { signal: controller.signal });
+        if (!res.ok) {
+          console.error("Failed to fetch channels", res.status);
+          return;
+        }
+
+        const data = await res.json();
+        if (!Array.isArray(data)) return;
+
+        const normalized = data.map(normalizeChannel);
+
+        setChannels(normalized);
+
+        if (!activeChannelId && normalized[0]?.name) {
+          setActiveChannel(normalized[0].name);
+        }
+      } catch (error: any) {
+        if (error?.name === "AbortError") return;
+        console.error("Load channels error", error);
+      }
+    };
+
+    loadChannels();
+
+    return () => controller.abort();
+  }, [activeChannelId, setActiveChannel, setChannels]);
 
   const persistMessage = useCallback(async (channelId: string, senderId: string, content: string) => {
     try {
@@ -81,23 +125,26 @@ export default function ChatLayout() {
         if (isCancelled || !Array.isArray(data)) return;
 
         const normalized = data
-          .filter((m) => m?.channel_id)
+          .map((m: unknown) => (m && typeof m === "object" ? (m as Record<string, unknown>) : null))
+          .filter((m): m is Record<string, unknown> => Boolean(m?.channel_id))
           .map((m) => {
             const fallbackId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
             const createdAt = Number(m.created_at ?? 0) * 1000;
 
             return {
               id: String(m.id ?? fallbackId),
-              text: m.content ?? "",
-              senderId: m.user_id ?? "unknown",
-              channelId: m.channel_id,
+              text: String(m.content ?? ""),
+              senderId: String(m.user_id ?? "unknown"),
+              channelId: String(m.channel_id),
               timestamp: new Date(Number.isFinite(createdAt) && createdAt > 0 ? createdAt : Date.now()),
             };
           });
 
         setMessagesForChannel(activeChannelId, normalized);
-      } catch (error: any) {
-        if (isCancelled || error?.name === "AbortError") return;
+      } catch (error: unknown) {
+        const isAbort =
+          typeof error === "object" && error !== null && "name" in error && (error as { name?: string }).name === "AbortError";
+        if (isCancelled || isAbort) return;
         console.error("Fetch messages error", error);
       }
     };
@@ -144,7 +191,7 @@ export default function ChatLayout() {
           timestamp: new Date(),
         });
         void persistMessage(channelId, GEMINI_USER_ID, data.reply);
-      } catch (error) {
+      } catch (error: unknown) {
         if (!isCancelled) {
           console.error("Gemini fetch error", error);
         }
@@ -164,7 +211,9 @@ export default function ChatLayout() {
   const handleSendMessage = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!inputText.trim()) return;
-    const channelId = activeChannelId || activeChannel.id;
+    const channelId = activeChannel?.name || activeChannelId;
+
+    if (!channelId) return;
 
     const newMessage = {
       id: Date.now().toString(),
@@ -206,6 +255,7 @@ export default function ChatLayout() {
   };
 
   const openEditChannel = () => {
+    if (!activeChannel) return;
     setChannelDialogMode("edit");
     setChannelDialogOpen(true);
   };
@@ -217,6 +267,7 @@ export default function ChatLayout() {
   };
 
   const openChannelMembers = () => {
+    if (!activeChannel) return;
     setUserListIds(activeChannel.members);
     setUserListTitle(`#${activeChannel.name} Members`);
     setUserListOpen(true);
@@ -255,10 +306,10 @@ export default function ChatLayout() {
                 {channels.map((channel) => (
                   <button
                     key={channel.id}
-                    onClick={() => setActiveChannel(channel.id)}
+                    onClick={() => setActiveChannel(channel.name)}
                     className={cn(
                       "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ease-spring",
-                      activeChannelId === channel.id
+                      activeChannelId === channel.name
                         ? "bg-[var(--color-soft-blue)] text-white shadow-md shadow-blue-200 scale-[1.02]"
                         : "text-gray-600 hover:bg-gray-50 hover:scale-[1.01]",
                     )}
@@ -266,15 +317,10 @@ export default function ChatLayout() {
                     <div className="flex items-center gap-2.5">
                       <Hash
                         size={16}
-                        className={cn(activeChannelId === channel.id ? "text-blue-100" : "text-gray-400")}
+                        className={cn(activeChannelId === channel.name ? "text-blue-100" : "text-gray-400")}
                       />
                       <span className="truncate">{channel.name}</span>
                     </div>
-                    {channel.unread > 0 && (
-                      <span className="bg-[var(--color-soft-orange)] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
-                        {channel.unread}
-                      </span>
-                    )}
                   </button>
                 ))}
               </div>
@@ -360,10 +406,10 @@ export default function ChatLayout() {
             <Hash className="text-gray-400" size={20} />
             <div>
               <h2 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-                {activeChannel.name}
+                {activeChannel?.name ?? "No Channel"}
                 <ChevronDown size={14} className="text-gray-400" />
               </h2>
-              {activeChannel.description && (
+              {activeChannel?.description && (
                 <p className="text-xs text-gray-400 truncate max-w-[300px]">{activeChannel.description}</p>
               )}
             </div>
@@ -410,9 +456,11 @@ export default function ChatLayout() {
                 <Hash size={40} className="text-gray-300" />
               </div>
               <div className="text-center">
-                <p className="text-lg font-bold text-gray-600">Welcome to #{activeChannel.name}!</p>
+                <p className="text-lg font-bold text-gray-600">
+                  {activeChannel ? `Welcome to #${activeChannel.name}!` : "チャンネルを作成してください"}
+                </p>
                 <p className="text-sm text-gray-400 mt-1">This is the start of the channel.</p>
-                {activeChannel.description && (
+                {activeChannel?.description && (
                   <p className="text-sm text-[var(--color-soft-blue)] mt-2 bg-blue-50 px-3 py-1 rounded-full inline-block">
                     Topic: {activeChannel.description}
                   </p>
@@ -502,8 +550,8 @@ export default function ChatLayout() {
         <div className="p-6 pt-2 bg-white">
           <form
             onSubmit={handleSendMessage}
-            className="relative flex items-center gap-2 bg-gray-50 p-2 rounded-[1.5rem] border border-gray-200 focus-within:border-[var(--color-soft-blue)] focus-within:ring-4 focus-within:ring-blue-50 transition-all duration-300"
-          >
+              className="relative flex items-center gap-2 bg-gray-50 p-2 rounded-[1.5rem] border border-gray-200 focus-within:border-[var(--color-soft-blue)] focus-within:ring-4 focus-within:ring-blue-50 transition-all duration-300"
+            >
             <Button
               type="button"
               variant="ghost"
@@ -513,12 +561,12 @@ export default function ChatLayout() {
               <Plus size={20} />
             </Button>
 
-            <Input
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder={`Message #${activeChannel.name}`}
-              className="flex-1 border-none bg-transparent shadow-none focus-visible:ring-0 text-base placeholder:text-gray-400 h-12"
-            />
+              <Input
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder={`Message #${activeChannel?.name ?? ""}`}
+                className="flex-1 border-none bg-transparent shadow-none focus-visible:ring-0 text-base placeholder:text-gray-400 h-12"
+              />
 
             <div className="flex items-center gap-1 pr-1">
               <Button
