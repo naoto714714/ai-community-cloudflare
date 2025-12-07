@@ -53,7 +53,6 @@ GEMINI_API_KEY="your-gemini-api-key"
 2. 先頭に frontmatter を書く:
    ```md
    ---
-   id: 3
    name: "newuser"
    personality: "Friendly bot"
    ---

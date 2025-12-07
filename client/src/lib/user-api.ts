@@ -4,7 +4,6 @@ import { User } from "./store";
 const modules = import.meta.glob("../users/*.md", { eager: true, as: "raw" });
 
 type Frontmatter = {
-  id?: number;
   name?: string;
   personality?: string;
 };
@@ -26,10 +25,7 @@ const parseFrontmatter = (md: string): Frontmatter => {
       .replace(/^"+|"+$/g, "")
       .replace(/^'+|'+$/g, "");
 
-    if (key === "id") {
-      const num = Number(rawVal);
-      if (Number.isFinite(num)) data.id = num;
-    } else if (key === "name") {
+    if (key === "name") {
       data.name = rawVal;
     } else if (key === "personality") {
       data.personality = rawVal;
