@@ -12,6 +12,7 @@ import ChannelDialog from "./ChannelDialog";
 import UserListDialog from "./UserListDialog";
 
 const DEFAULT_AUTO_CHAT_INTERVAL_SEC = 10;
+const GEMINI_USER_ID = "gemini";
 
 export default function ChatLayout() {
   const { users, channels, messages, activeChannelId, setActiveChannel, addMessage } = useAppStore();
@@ -25,7 +26,6 @@ export default function ChatLayout() {
   const [userListTitle, setUserListTitle] = useState("");
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const GEMINI_USER_ID = "gemini";
 
   const activeChannel = channels.find((c) => c.id === activeChannelId) || channels[0];
   const currentMessages = messages.filter((m) => m.channelId === activeChannelId);
