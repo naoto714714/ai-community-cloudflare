@@ -11,14 +11,13 @@ import { cn } from "@/lib/utils";
 import ChannelDialog from "./ChannelDialog";
 import UserListDialog from "./UserListDialog";
 
-const DEFAULT_AUTO_CHAT_INTERVAL_MS = 10000;
+const DEFAULT_AUTO_CHAT_INTERVAL_SEC = 10;
 
 export default function ChatLayout() {
   const { users, channels, messages, activeChannelId, setActiveChannel, addMessage } = useAppStore();
 
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [autoChatIntervalMs] = useState<number>(DEFAULT_AUTO_CHAT_INTERVAL_MS);
   const [channelDialogOpen, setChannelDialogOpen] = useState(false);
   const [channelDialogMode, setChannelDialogMode] = useState<"create" | "edit">("create");
   const [userListOpen, setUserListOpen] = useState(false);
@@ -40,7 +39,8 @@ export default function ChatLayout() {
   }, [currentMessages, activeChannelId]);
 
   useEffect(() => {
-    if (!autoChatIntervalMs || !activeChannelId) return;
+    const autoChatIntervalMs = DEFAULT_AUTO_CHAT_INTERVAL_SEC * 1000;
+    if (!activeChannelId) return;
 
     let isCancelled = false;
     const channelId = activeChannelId;
@@ -86,7 +86,7 @@ export default function ChatLayout() {
       isCancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [activeChannelId, autoChatIntervalMs, addMessage]);
+  }, [activeChannelId, addMessage]);
 
   const handleSendMessage = (e?: React.FormEvent) => {
     e?.preventDefault();
