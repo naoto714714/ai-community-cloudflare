@@ -1,11 +1,7 @@
-// functions/gemini.ts
 import { GoogleGenAI } from "@google/genai";
 
 const SYSTEM_PROMPT = `
-あなたは TypeScript / Cloudflare Pages / D1 / Gemini に詳しいアシスタントです。
-- 回答は必ず日本語で行うこと
-- 必要ならコード例を示すこと
-- 分からないことをそれっぽく誤魔化さないこと
+日本語で回答してください。
 `;
 
 export async function onRequestPost(context) {
@@ -22,6 +18,21 @@ export async function onRequestPost(context) {
 
   if (!user_prompt) {
     return new Response("user_prompt is required", { status: 400 });
+  }
+
+  const isDisabled =
+    String(env.DISABLE_GEMINI_API ?? "").toLowerCase() === "true";
+  if (isDisabled) {
+    return new Response(
+      JSON.stringify({
+        reply: "",
+        disabled: true,
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
 
   if (!env.GEMINI_API_KEY) {
