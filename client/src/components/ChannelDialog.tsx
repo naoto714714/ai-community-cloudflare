@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { useAppStore } from "@/lib/store";
 import { fetchChannels, createChannel, updateChannel } from "@/lib/channel-api";
+import { useAppStore } from "@/lib/store";
 
 interface ChannelDialogProps {
   isOpen: boolean;
@@ -60,39 +60,22 @@ export default function ChannelDialog({ isOpen, onClose, mode, channelId }: Chan
     setSubmitting(true);
     try {
       if (mode === "create") {
-        const res = await fetch("/channels", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            channel_id: name.trim(),
-            description: description.trim(),
-            members: payloadMembers,
-          }),
+        const created = await createChannel({
+          channel_id: name.trim(),
+          description: description.trim(),
+          members: payloadMembers,
         });
 
-        if (!res.ok) {
-          console.error("Create channel failed", res.status);
-        } else {
-          const created = await res.json();
-          const newName = created?.channel_id ? String(created.channel_id) : name.trim();
-          await refreshChannels(newName);
-        }
+        const newName = created?.name ?? name.trim();
+        await refreshChannels(newName);
       } else if (mode === "edit" && channelId) {
-        const res = await fetch("/channels", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            channel_id: name.trim(),
-            description: description.trim(),
-            members: payloadMembers,
-          }),
+        await updateChannel({
+          channel_id: name.trim(),
+          description: description.trim(),
+          members: payloadMembers,
         });
 
-        if (!res.ok) {
-          console.error("Update channel failed", res.status);
-        } else {
-          await refreshChannels(channelId);
-        }
+        await refreshChannels(channelId);
       }
     } catch (error) {
       console.error("Channel submit error", error);
