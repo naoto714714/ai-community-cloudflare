@@ -20,6 +20,21 @@ export async function onRequestPost(context) {
     return new Response("user_prompt is required", { status: 400 });
   }
 
+  const isDisabled =
+    String(env.DISABLE_GEMINI_API ?? "").toLowerCase() === "true";
+  if (isDisabled) {
+    return new Response(
+      JSON.stringify({
+        reply: "",
+        disabled: true,
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+
   if (!env.GEMINI_API_KEY) {
     console.error("GEMINI_API_KEY is not set in env");
     return new Response("Server configuration error", { status: 500 });
