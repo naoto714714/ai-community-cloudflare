@@ -1,3 +1,4 @@
+import YAML from "yaml";
 import { User } from "./store";
 
 // ユーザーファイルを列挙
@@ -12,26 +13,13 @@ const parseFrontmatter = (md: string): Frontmatter => {
   const match = md.match(/^---\n([\s\S]*?)\n---/);
   if (!match) return {};
 
-  const lines = match[1].split("\n");
-  const data: Frontmatter = {};
-
-  for (const line of lines) {
-    const [rawKey, ...rawValParts] = line.split(":");
-    if (!rawKey || rawValParts.length === 0) continue;
-    const key = rawKey.trim();
-    const rawVal = rawValParts
-      .join(":")
-      .trim()
-      .replace(/^"+|"+$/g, "")
-      .replace(/^'+|'+$/g, "");
-
-    if (key === "name") {
-      data.name = rawVal;
-    } else if (key === "personality") {
-      data.personality = rawVal;
-    }
+  try {
+    const parsed = YAML.parse(match[1]);
+    return parsed && typeof parsed === "object" ? (parsed as Frontmatter) : {};
+  } catch (e) {
+    console.error("Failed to parse frontmatter", e);
+    return {};
   }
-  return data;
 };
 
 const normalizeUser = (fm: Frontmatter): User | null => {
