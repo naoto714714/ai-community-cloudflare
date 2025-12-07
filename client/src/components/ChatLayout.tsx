@@ -11,11 +11,14 @@ import { cn } from "@/lib/utils";
 import ChannelDialog from "./ChannelDialog";
 import UserListDialog from "./UserListDialog";
 
+const DEFAULT_AUTO_CHAT_INTERVAL_MS = 10000;
+
 export default function ChatLayout() {
   const { users, channels, messages, activeChannelId, setActiveChannel, addMessage } = useAppStore();
 
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [autoChatIntervalMs, setAutoChatIntervalMs] = useState<number | null>(null);
   const [channelDialogOpen, setChannelDialogOpen] = useState(false);
   const [channelDialogMode, setChannelDialogMode] = useState<"create" | "edit">("create");
   const [userListOpen, setUserListOpen] = useState(false);
@@ -23,6 +26,7 @@ export default function ChatLayout() {
   const [userListTitle, setUserListTitle] = useState("");
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const GEMINI_USER_ID = "gemini";
 
   const activeChannel = channels.find((c) => c.id === activeChannelId) || channels[0];
   const currentMessages = messages.filter((m) => m.channelId === activeChannelId);
@@ -35,54 +39,86 @@ export default function ChatLayout() {
     }
   }, [currentMessages, activeChannelId]);
 
+  useEffect(() => {
+    const fetchInterval = async () => {
+      try {
+        const res = await fetch("/gemini");
+
+        if (!res.ok) {
+          console.error("Failed to fetch Gemini interval", res.status);
+          return;
+        }
+
+        const data = await res.json();
+        const seconds = Number(data.intervalSeconds);
+
+        if (Number.isFinite(seconds) && seconds > 0) {
+          setAutoChatIntervalMs(seconds * 1000);
+        } else {
+          setAutoChatIntervalMs(DEFAULT_AUTO_CHAT_INTERVAL_MS);
+        }
+      } catch (error) {
+        console.error("Failed to load Gemini interval", error);
+        setAutoChatIntervalMs(DEFAULT_AUTO_CHAT_INTERVAL_MS);
+      }
+    };
+
+    fetchInterval();
+  }, []);
+
+  useEffect(() => {
+    if (!autoChatIntervalMs || !activeChannelId) return;
+
+    let isCancelled = false;
+    const channelId = activeChannelId;
+
+    const requestGemini = async () => {
+      try {
+        const res = await fetch("/gemini", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            channel_id: channelId,
+            user_prompt: "こんにちは",
+          }),
+        });
+
+        if (!res.ok) {
+          console.error("Gemini request failed", res.status);
+          return;
+        }
+
+        const data = await res.json();
+
+        if (isCancelled || !data?.reply) return;
+
+        addMessage({
+          id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+          text: data.reply,
+          senderId: GEMINI_USER_ID,
+          channelId,
+          timestamp: new Date(),
+        });
+      } catch (error) {
+        if (!isCancelled) {
+          console.error("Gemini fetch error", error);
+        }
+      }
+    };
+
+    requestGemini();
+
+    const intervalId = window.setInterval(requestGemini, autoChatIntervalMs);
+
+    return () => {
+      isCancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [activeChannelId, autoChatIntervalMs, addMessage]);
+
   const handleSendMessage = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!inputText.trim()) return;
-
-    // --ここから実験エリア--
-    const send = async () => {
-      const response = await fetch("/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          channel_id: "hogehoge",
-          user_id: "fugafuga",
-          content: "piyopiyo",
-        }),
-      });
-
-      const data = await response.json();
-      console.log(data);
-    };
-
-    send();
-
-    const send2= async () => {
-      const response = await fetch("/messages", {
-        method: "GET",
-      });
-
-      const data = await response.json();
-      console.log(data);
-    };
-
-    send2();
-
-    const send3 = async () => {
-    const res = await fetch("/gemini", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_prompt: "スラック風チャットアプリのDB設計をざっくり教えて",
-      }),
-    });
-    const data = await res.json();
-    console.log(data);
-  };
-
-  send3();
-
-    // --ここまで実験エリア--
 
     const newMessage = {
       id: Date.now().toString(),
@@ -99,7 +135,7 @@ export default function ChatLayout() {
     // Random Bot Auto-reply
     setTimeout(() => {
       // Filter bots (users who are not 'me') that are members of the current channel
-      const availableBots = channelMembers.filter((u) => u.id !== "me");
+      const availableBots = channelMembers.filter((u) => u.id !== "me" && u.id !== GEMINI_USER_ID);
 
       if (availableBots.length > 0) {
         const randomBot = availableBots[Math.floor(Math.random() * availableBots.length)];
