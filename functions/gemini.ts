@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 
+const GEMINI_MODEL = "gemini-2.5-flash";
 const SYSTEM_PROMPT = `
 日本語で回答してください。
 `;
@@ -46,7 +47,7 @@ export async function onRequestPost(context) {
 
   try {
     const geminiResponse = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: GEMINI_MODEL,
       contents: user_prompt,
       config: {
         systemInstruction: SYSTEM_PROMPT,
