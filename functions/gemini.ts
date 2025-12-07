@@ -2,23 +2,46 @@
 import { GoogleGenAI } from "@google/genai";
 
 const SYSTEM_PROMPT = `
-あなたは TypeScript / Cloudflare Pages / D1 / Gemini に詳しいアシスタントです。
-- 回答は必ず日本語で行うこと
-- 必要ならコード例を示すこと
-- 分からないことをそれっぽく誤魔化さないこと
+日本語で回答してください。
 `;
+
+const DEFAULT_USER_PROMPT = "こんにちは";
+const DEFAULT_INTERVAL_SECONDS = 10;
+
+const getIntervalSeconds = (env: Record<string, unknown>) => {
+  const raw =
+    env.AUTO_CHAT_INTERVAL_SECONDS ??
+    env.GEMINI_AUTO_CHAT_INTERVAL_SECONDS;
+  const parsed = Number(raw);
+
+  if (Number.isFinite(parsed) && parsed > 0) {
+    return parsed;
+  }
+
+  return DEFAULT_INTERVAL_SECONDS;
+};
+
+export async function onRequestGet(context) {
+  const intervalSeconds = getIntervalSeconds(context.env);
+
+  return new Response(JSON.stringify({ intervalSeconds }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+}
 
 export async function onRequestPost(context) {
   const { request, env } = context;
 
-  let body: { user_prompt?: string };
+  let body: { user_prompt?: string; channel_id?: string };
   try {
     body = await request.json();
   } catch (e) {
     return new Response("Invalid JSON", { status: 400 });
   }
 
-  const user_prompt = body.user_prompt?.trim();
+  const channel_id = body.channel_id?.trim();
+  const user_prompt = (body.user_prompt ?? DEFAULT_USER_PROMPT).trim();
 
   if (!user_prompt) {
     return new Response("user_prompt is required", { status: 400 });
@@ -47,6 +70,8 @@ export async function onRequestPost(context) {
     return new Response(
       JSON.stringify({
         reply: text,
+        channel_id: channel_id ?? null,
+        timestamp: new Date().toISOString(),
       }),
       {
         status: 200,
