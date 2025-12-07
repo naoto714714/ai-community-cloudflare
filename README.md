@@ -46,3 +46,17 @@ GEMINI_API_KEY="your-gemini-api-key"
 | `pnpm migrate:create hogehoge` | hogehogeというマイグレーションファイルを作成 |
 | `pnpm migrate:local`           | ローカルD1にマイグレーション適用             |
 | `pnpm migrate:remote`          | リモートD1にマイグレーション適用             |
+
+## ユーザーの追加方法（Markdown管理）
+
+1. `client/public/users/` に `003_newuser.md` のような連番ファイルを追加する。
+2. 先頭に frontmatter を書く:
+   ```md
+   ---
+   id: 3
+   name: "newuser"
+   personality: "Friendly bot"
+   ---
+   ```
+   本文は任意で空でもOK。
+3. `client/src/lib/user-api.ts` の `USER_FILES` 配列にファイルパスを追加する。

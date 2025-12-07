@@ -21,5 +21,5 @@ CREATE TABLE channels (
 
 INSERT INTO channels (channel_id, description, members)
 VALUES
-  ('雑談', '何でも自由に話せる場所', json('["u1", "u2", "u3", "u4", "gemini", "me"]')),
-  ('ニュース', '最新のニュースや情報', json('["u1", "u5", "gemini", "me"]'));
+  ('雑談', '何でも自由に話せる場所', json('["gemini", "me"]')),
+  ('ニュース', '最新のニュースや情報', json('["gemini", "me"]'));

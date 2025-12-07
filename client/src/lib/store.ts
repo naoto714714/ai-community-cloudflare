@@ -2,6 +2,7 @@ import { create } from "zustand";
 
 // Types
 export type User = {
+  // idとnameは同じ値
   id: string;
   name: string;
   avatar?: string;
@@ -23,18 +24,6 @@ export type Message = {
   timestamp: Date;
 };
 
-// Mock Users (All are bots except 'me')
-export const INITIAL_USERS: User[] = [
-  { id: "u1", name: "Sarah", personality: "Cheerful & Helpful" },
-  { id: "u2", name: "Mike", personality: "Sarcastic & Witty" },
-  { id: "u3", name: "Design Bot", personality: "Creative & Artistic" },
-  { id: "u4", name: "Dev Bot", personality: "Logical & Precise" },
-  { id: "u5", name: "News Bot", personality: "Informative & Neutral" },
-  { id: "u6", name: "Game Bot", personality: "Playful & Competitive" },
-  { id: "gemini", name: "Gemini", personality: "AI Assistant" },
-  { id: "me", name: "You", personality: "User" },
-];
-
 // Store State
 interface AppState {
   users: User[];
@@ -43,6 +32,7 @@ interface AppState {
   activeChannelId: string;
 
   // Actions
+  setUsers: (users: User[]) => void;
   setChannels: (channels: Channel[]) => void;
   setActiveChannel: (id: string) => void;
   addMessage: (message: Message) => void;
@@ -52,11 +42,12 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  users: INITIAL_USERS,
+  users: [],
   channels: [],
   messages: [],
   activeChannelId: "", // API取得後に設定
 
+  setUsers: (users) => set({ users }),
   setChannels: (channels) => set({ channels }),
   setActiveChannel: (id) => set({ activeChannelId: id }),
 

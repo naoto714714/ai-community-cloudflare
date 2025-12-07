@@ -10,6 +10,7 @@ import { fetchChannels } from "@/lib/channel-api";
 import { requestGemini as requestGeminiApi } from "@/lib/gemini-api";
 import { createMessage, fetchMessagesByChannel } from "@/lib/message-api";
 import { useAppStore } from "@/lib/store";
+import { fetchUsers } from "@/lib/user-api";
 import { cn } from "@/lib/utils";
 import ChannelDialog from "./ChannelDialog";
 import UserListDialog from "./UserListDialog";
@@ -23,6 +24,7 @@ export default function ChatLayout() {
     channels,
     messages,
     activeChannelId,
+    setUsers,
     setActiveChannel,
     setChannels,
     addMessage,
@@ -42,6 +44,21 @@ export default function ChatLayout() {
   const activeChannel = channels.find((c) => c.name === activeChannelId) || channels[0];
   const currentMessages = activeChannel ? messages.filter((m) => m.channelId === activeChannel.name) : [];
   const channelMembers = activeChannel ? users.filter((u) => activeChannel.members.includes(u.id)) : [];
+
+  // ユーザー読み込み（Markdown frontmatter）
+  useEffect(() => {
+    const controller = new AbortController();
+    const loadUsers = async () => {
+      try {
+        const loaded = await fetchUsers();
+        if (!controller.signal.aborted) setUsers(loaded);
+      } catch (e) {
+        if (!controller.signal.aborted) console.error("Load users error", e);
+      }
+    };
+    loadUsers();
+    return () => controller.abort();
+  }, [setUsers]);
 
   // 初期ロード: チャンネル一覧取得
   useEffect(() => {
