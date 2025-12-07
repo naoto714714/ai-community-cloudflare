@@ -39,6 +39,7 @@ export default function ChatLayout() {
     e?.preventDefault();
     if (!inputText.trim()) return;
 
+    // --ここから実験エリア--
     const send = async () => {
       const response = await fetch("/messages", {
         method: "POST",
@@ -66,6 +67,22 @@ export default function ChatLayout() {
     };
 
     send2();
+
+    const send3 = async () => {
+    const res = await fetch("/gemini", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_prompt: "スラック風チャットアプリのDB設計をざっくり教えて",
+      }),
+    });
+    const data = await res.json();
+    console.log(data);
+  };
+
+  send3();
+
+    // --ここまで実験エリア--
 
     const newMessage = {
       id: Date.now().toString(),
