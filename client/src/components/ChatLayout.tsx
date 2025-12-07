@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { fetchChannels } from "@/lib/channel-api";
+import { createMessage, fetchMessagesByChannel } from "@/lib/message-api";
+import { requestGemini as requestGeminiApi } from "@/lib/gemini-api";
 import { useAppStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import ChannelDialog from "./ChannelDialog";
@@ -70,19 +72,11 @@ export default function ChatLayout() {
 
   const persistMessage = useCallback(async (channelId: string, senderId: string, content: string) => {
     try {
-      const res = await fetch("/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          channel_id: channelId,
-          user_id: senderId,
-          content,
-        }),
+      await createMessage({
+        channel_id: channelId,
+        user_id: senderId,
+        content,
       });
-
-      if (!res.ok) {
-        console.error("Failed to persist message", res.status);
-      }
     } catch (error) {
       console.error("Persist message error", error);
     }
@@ -104,35 +98,9 @@ export default function ChatLayout() {
 
     const fetchMessages = async () => {
       try {
-        const res = await fetch(`/messages?channel_id=${encodeURIComponent(activeChannelId)}`, {
-          signal: abortController.signal,
-        });
-
-        if (!res.ok) {
-          console.error("Failed to fetch messages", res.status);
-          return;
-        }
-
-        const data = await res.json();
-        if (isCancelled || !Array.isArray(data)) return;
-
-        const normalized = data
-          .map((m: unknown) => (m && typeof m === "object" ? (m as Record<string, unknown>) : null))
-          .filter((m): m is Record<string, unknown> => Boolean(m?.channel_id))
-          .map((m) => {
-            const fallbackId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
-            const createdAt = Number(m.created_at ?? 0) * 1000;
-
-            return {
-              id: String(m.id ?? fallbackId),
-              text: String(m.content ?? ""),
-              senderId: String(m.user_id ?? "unknown"),
-              channelId: String(m.channel_id),
-              timestamp: new Date(Number.isFinite(createdAt) && createdAt > 0 ? createdAt : Date.now()),
-            };
-          });
-
-        setMessagesForChannel(activeChannelId, normalized);
+        const data = await fetchMessagesByChannel(activeChannelId, abortController.signal);
+        if (isCancelled) return;
+        setMessagesForChannel(activeChannelId, data);
       } catch (error: unknown) {
         const isAbort =
           typeof error === "object" &&
@@ -158,23 +126,16 @@ export default function ChatLayout() {
 
     let isCancelled = false;
     const channelId = activeChannelId;
+    const abortController = new AbortController();
 
     const requestGemini = async () => {
       try {
-        const res = await fetch("/gemini", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        const data = await requestGeminiApi(
+          {
             user_prompt: "こんにちは",
-          }),
-        });
-
-        if (!res.ok) {
-          console.error("Gemini request failed", res.status);
-          return;
-        }
-
-        const data = await res.json();
+          },
+          abortController.signal,
+        );
 
         if (isCancelled || !data?.reply) return;
 
@@ -200,6 +161,7 @@ export default function ChatLayout() {
     return () => {
       isCancelled = true;
       window.clearInterval(intervalId);
+      abortController.abort();
     };
   }, [activeChannelId, addMessage, persistMessage]);
 
