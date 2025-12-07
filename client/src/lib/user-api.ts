@@ -20,7 +20,11 @@ const parseFrontmatter = (md: string): Frontmatter => {
     const [rawKey, ...rawValParts] = line.split(":");
     if (!rawKey || rawValParts.length === 0) continue;
     const key = rawKey.trim();
-    const rawVal = rawValParts.join(":").trim().replace(/^"+|"+$/g, "").replace(/^'+|'+$/g, "");
+    const rawVal = rawValParts
+      .join(":")
+      .trim()
+      .replace(/^"+|"+$/g, "")
+      .replace(/^'+|'+$/g, "");
 
     if (key === "id") {
       const num = Number(rawVal);
