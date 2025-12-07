@@ -34,18 +34,29 @@ const normalizeUser = (fm: Frontmatter): User | null => {
 };
 
 export const fetchUsers = async (): Promise<User[]> => {
-  const entries = Object.values(modules) as string[];
-  const parsed = entries
-    .map(parseFrontmatter)
-    .map(normalizeUser)
-    .filter((u): u is User => Boolean(u));
+  const entries = Object.entries(modules) as [string, string][];
+  const seen = new Set<string>();
+  const unique: User[] = [];
 
-  if (parsed.length === 0) {
+  for (const [path, raw] of entries) {
+    const user = normalizeUser(parseFrontmatter(raw));
+    if (!user) continue;
+
+    if (seen.has(user.id)) {
+      console.warn(`Duplicate user name detected: "${user.id}" in ${path}. Skipped.`);
+      continue;
+    }
+
+    seen.add(user.id);
+    unique.push(user);
+  }
+
+  if (unique.length === 0) {
     return [
       { id: "me", name: "me", personality: "User" },
       { id: "gemini", name: "gemini", personality: "AI Assistant" },
     ];
   }
 
-  return parsed;
+  return unique;
 };
