@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { useAppStore, Channel } from "@/lib/store";
+import { useAppStore } from "@/lib/store";
+import { fetchChannels, createChannel, updateChannel } from "@/lib/channel-api";
 
 interface ChannelDialogProps {
   isOpen: boolean;
@@ -39,27 +40,9 @@ export default function ChannelDialog({ isOpen, onClose, mode, channelId }: Chan
     }
   }, [isOpen, mode, channelId, channels]);
 
-  const normalizeChannel = (c: unknown): Channel => {
-    const record = (c && typeof c === "object") ? (c as Record<string, unknown>) : {};
-
-    const membersRaw = record.members;
-    const members = Array.isArray(membersRaw) ? membersRaw.map(String) : [];
-
-    return {
-      id: String(record.id ?? crypto.randomUUID?.() ?? Date.now()),
-      name: String(record.channel_id ?? record.name ?? ""),
-      description: String(record.description ?? ""),
-      members,
-    };
-  };
-
   const refreshChannels = async (selectName?: string) => {
     try {
-      const res = await fetch("/channels");
-      if (!res.ok) return;
-      const data = await res.json();
-      if (!Array.isArray(data)) return;
-      const normalized = data.map(normalizeChannel);
+      const normalized = await fetchChannels();
       setChannels(normalized);
       if (selectName && normalized.some((c) => c.name === selectName)) {
         setActiveChannel(selectName);

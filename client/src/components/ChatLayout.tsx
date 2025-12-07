@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAppStore } from "@/lib/store";
+import { fetchChannels } from "@/lib/channel-api";
 import { cn } from "@/lib/utils";
 import ChannelDialog from "./ChannelDialog";
 import UserListDialog from "./UserListDialog";
@@ -32,41 +33,21 @@ export default function ChatLayout() {
   const currentMessages = activeChannel ? messages.filter((m) => m.channelId === activeChannel.name) : [];
   const channelMembers = activeChannel ? users.filter((u) => activeChannel.members.includes(u.id)) : [];
 
-  const normalizeChannel = (c: unknown): Channel => {
-    const record = c && typeof c === "object" ? (c as Record<string, unknown>) : {};
-    const membersRaw = record.members;
-    return {
-      id: String(record.id ?? crypto.randomUUID?.() ?? Date.now()),
-      name: String(record.channel_id ?? record.name ?? ""),
-      description: String(record.description ?? ""),
-      members: Array.isArray(membersRaw) ? membersRaw.map(String) : [],
-    };
-  };
-
   // 初期ロード: チャンネル一覧取得
   useEffect(() => {
     const controller = new AbortController();
 
     const loadChannels = async () => {
       try {
-        const res = await fetch("/channels", { signal: controller.signal });
-        if (!res.ok) {
-          console.error("Failed to fetch channels", res.status);
-          return;
-        }
-
-        const data = await res.json();
-        if (!Array.isArray(data)) return;
-
-        const normalized = data.map(normalizeChannel);
-
+        const normalized = await fetchChannels(controller.signal);
         setChannels(normalized);
-
         if (!activeChannelId && normalized[0]?.name) {
           setActiveChannel(normalized[0].name);
         }
-      } catch (error: any) {
-        if (error?.name === "AbortError") return;
+      } catch (error: unknown) {
+        const isAbort =
+          typeof error === "object" && error !== null && "name" in error && (error as { name?: string }).name === "AbortError";
+        if (isAbort) return;
         console.error("Load channels error", error);
       }
     };

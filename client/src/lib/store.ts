@@ -47,8 +47,6 @@ interface AppState {
   setActiveChannel: (id: string) => void;
   addMessage: (message: Message) => void;
   setMessagesForChannel: (channelId: string, messages: Message[]) => void;
-  addChannel: (channel: Channel) => void;
-  updateChannel: (id: string, updates: Partial<Channel>) => void;
   addUser: (user: User) => void;
   removeUser: (id: string) => void;
 }
@@ -70,16 +68,6 @@ export const useAppStore = create<AppState>((set) => ({
   setMessagesForChannel: (channelId, newMessages) =>
     set((state) => ({
       messages: [...state.messages.filter((m) => m.channelId !== channelId), ...newMessages],
-    })),
-
-  addChannel: (channel) =>
-    set((state) => ({
-      channels: [...state.channels, channel],
-    })),
-
-  updateChannel: (id, updates) =>
-    set((state) => ({
-      channels: state.channels.map((c) => (c.id === id ? { ...c, ...updates } : c)),
     })),
 
   addUser: (user) =>
