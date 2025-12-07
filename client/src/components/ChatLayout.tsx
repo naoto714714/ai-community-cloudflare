@@ -18,7 +18,7 @@ export default function ChatLayout() {
 
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [autoChatIntervalMs, setAutoChatIntervalMs] = useState<number | null>(null);
+  const [autoChatIntervalMs] = useState<number>(DEFAULT_AUTO_CHAT_INTERVAL_MS);
   const [channelDialogOpen, setChannelDialogOpen] = useState(false);
   const [channelDialogMode, setChannelDialogMode] = useState<"create" | "edit">("create");
   const [userListOpen, setUserListOpen] = useState(false);
@@ -40,33 +40,6 @@ export default function ChatLayout() {
   }, [currentMessages, activeChannelId]);
 
   useEffect(() => {
-    const fetchInterval = async () => {
-      try {
-        const res = await fetch("/gemini");
-
-        if (!res.ok) {
-          console.error("Failed to fetch Gemini interval", res.status);
-          return;
-        }
-
-        const data = await res.json();
-        const seconds = Number(data.intervalSeconds);
-
-        if (Number.isFinite(seconds) && seconds > 0) {
-          setAutoChatIntervalMs(seconds * 1000);
-        } else {
-          setAutoChatIntervalMs(DEFAULT_AUTO_CHAT_INTERVAL_MS);
-        }
-      } catch (error) {
-        console.error("Failed to load Gemini interval", error);
-        setAutoChatIntervalMs(DEFAULT_AUTO_CHAT_INTERVAL_MS);
-      }
-    };
-
-    fetchInterval();
-  }, []);
-
-  useEffect(() => {
     if (!autoChatIntervalMs || !activeChannelId) return;
 
     let isCancelled = false;
@@ -78,7 +51,6 @@ export default function ChatLayout() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            channel_id: channelId,
             user_prompt: "こんにちは",
           }),
         });

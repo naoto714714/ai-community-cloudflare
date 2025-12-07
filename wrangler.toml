@@ -2,9 +2,6 @@ name = "ai-community-cloudflare"
 compatibility_date = "2025-12-06"
 pages_build_output_dir = "dist/public"
 
-[vars]
-AUTO_CHAT_INTERVAL_SECONDS = "10"
-
 [[d1_databases]]
 binding = "DB"
 database_name = "ai-community"
