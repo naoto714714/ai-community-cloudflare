@@ -35,8 +35,7 @@ const normalizeUser = (fm: Frontmatter): User | null => {
 
 export const fetchUsers = async (): Promise<User[]> => {
   // import.meta.glob の列挙順は未保証。ファイルパスでソートして安定化。
-  const entries = (Object.entries(modules) as [string, string][])
-    .sort(([a], [b]) => a.localeCompare(b));
+  const entries = (Object.entries(modules) as [string, string][]).sort(([a], [b]) => a.localeCompare(b));
   const seen = new Set<string>();
   const unique: User[] = [];
 
