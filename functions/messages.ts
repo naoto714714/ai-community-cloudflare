@@ -1,9 +1,18 @@
 export async function onRequestGet(context) {
-  const db = context.env.DB;
+  const { request, env } = context;
+  const db = env.DB;
 
-  const { results } = await db
-    .prepare("SELECT * FROM messages")
-    .all();
+  const url = new URL(request.url);
+  const channelId = url.searchParams.get("channel_id");
+
+  const baseQuery = "SELECT * FROM messages";
+  const whereClause = channelId ? " WHERE channel_id = ?1" : "";
+  const orderClause = " ORDER BY created_at ASC";
+
+  const statement = db.prepare(`${baseQuery}${whereClause}${orderClause}`);
+  const prepared = channelId ? statement.bind(channelId) : statement;
+
+  const { results } = await prepared.all();
 
   return new Response(JSON.stringify(results), {
     headers: { "Content-Type": "application/json" },

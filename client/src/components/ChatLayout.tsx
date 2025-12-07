@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { Send, Hash, Bot, Plus, Search, Bell, MoreVertical, Smile, ChevronDown, Users } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,11 +11,12 @@ import { cn } from "@/lib/utils";
 import ChannelDialog from "./ChannelDialog";
 import UserListDialog from "./UserListDialog";
 
-const DEFAULT_AUTO_CHAT_INTERVAL_SEC = 10;
+const DEFAULT_AUTO_CHAT_INTERVAL_SEC = 60;
 const GEMINI_USER_ID = "gemini";
 
 export default function ChatLayout() {
-  const { users, channels, messages, activeChannelId, setActiveChannel, addMessage } = useAppStore();
+  const { users, channels, messages, activeChannelId, setActiveChannel, addMessage, setMessagesForChannel } =
+    useAppStore();
 
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -31,12 +32,83 @@ export default function ChatLayout() {
   const currentMessages = messages.filter((m) => m.channelId === activeChannelId);
   const channelMembers = users.filter((u) => activeChannel.members.includes(u.id));
 
+  const persistMessage = useCallback(async (channelId: string, senderId: string, content: string) => {
+    try {
+      const res = await fetch("/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channel_id: channelId,
+          user_id: senderId,
+          content,
+        }),
+      });
+
+      if (!res.ok) {
+        console.error("Failed to persist message", res.status);
+      }
+    } catch (error) {
+      console.error("Persist message error", error);
+    }
+  }, []);
+
   // Auto-scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [currentMessages, activeChannelId]);
+
+  // Fetch messages for active channel
+  useEffect(() => {
+    if (!activeChannelId) return;
+
+    const abortController = new AbortController();
+    let isCancelled = false;
+
+    const fetchMessages = async () => {
+      try {
+        const res = await fetch(`/messages?channel_id=${encodeURIComponent(activeChannelId)}`, {
+          signal: abortController.signal,
+        });
+
+        if (!res.ok) {
+          console.error("Failed to fetch messages", res.status);
+          return;
+        }
+
+        const data = await res.json();
+        if (isCancelled || !Array.isArray(data)) return;
+
+        const normalized = data
+          .filter((m) => m?.channel_id)
+          .map((m) => {
+            const fallbackId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+            const createdAt = Number(m.created_at ?? 0) * 1000;
+
+            return {
+              id: String(m.id ?? fallbackId),
+              text: m.content ?? "",
+              senderId: m.user_id ?? "unknown",
+              channelId: m.channel_id,
+              timestamp: new Date(Number.isFinite(createdAt) && createdAt > 0 ? createdAt : Date.now()),
+            };
+          });
+
+        setMessagesForChannel(activeChannelId, normalized);
+      } catch (error: any) {
+        if (isCancelled || error?.name === "AbortError") return;
+        console.error("Fetch messages error", error);
+      }
+    };
+
+    fetchMessages();
+
+    return () => {
+      isCancelled = true;
+      abortController.abort();
+    };
+  }, [activeChannelId, setMessagesForChannel]);
 
   useEffect(() => {
     const autoChatIntervalMs = DEFAULT_AUTO_CHAT_INTERVAL_SEC * 1000;
@@ -71,6 +143,7 @@ export default function ChatLayout() {
           channelId,
           timestamp: new Date(),
         });
+        void persistMessage(channelId, GEMINI_USER_ID, data.reply);
       } catch (error) {
         if (!isCancelled) {
           console.error("Gemini fetch error", error);
@@ -86,21 +159,23 @@ export default function ChatLayout() {
       isCancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [activeChannelId, addMessage]);
+  }, [activeChannelId, addMessage, persistMessage]);
 
   const handleSendMessage = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!inputText.trim()) return;
+    const channelId = activeChannelId || activeChannel.id;
 
     const newMessage = {
       id: Date.now().toString(),
       text: inputText,
       senderId: "me",
-      channelId: activeChannelId,
+      channelId,
       timestamp: new Date(),
     };
 
     addMessage(newMessage);
+    void persistMessage(channelId, "me", inputText);
     setInputText("");
     setIsTyping(true);
 
