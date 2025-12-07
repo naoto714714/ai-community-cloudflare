@@ -8,7 +8,7 @@ import tseslint from "typescript-eslint";
 export default tseslint.config(
   // 除外ファイル
   {
-    ignores: ["dist/**", "node_modules/**", "*.min.js"],
+    ignores: [".wrangler/**", "dist/**", "node_modules/**", "*.min.js"],
   },
 
   // 基本設定

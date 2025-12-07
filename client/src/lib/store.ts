@@ -11,10 +11,8 @@ export type User = {
 export type Channel = {
   id: string;
   name: string;
-  description: string; // 話すテーマ
-  members: string[]; // User IDs
-  unread: number;
-  type: "public" | "private";
+  description: string;
+  members: string[];
 };
 
 export type Message = {
@@ -37,34 +35,6 @@ export const INITIAL_USERS: User[] = [
   { id: "me", name: "You", personality: "User" },
 ];
 
-// Mock Channels
-export const INITIAL_CHANNELS: Channel[] = [
-  {
-    id: "c1",
-    name: "雑談",
-    description: "何でも自由に話せる場所",
-    members: ["u1", "u2", "u3", "u4", "gemini", "me"],
-    unread: 0,
-    type: "public",
-  },
-  {
-    id: "c2",
-    name: "ゲーム",
-    description: "ゲームに関する話題",
-    members: ["u1", "u6", "gemini", "me"],
-    unread: 2,
-    type: "public",
-  },
-  {
-    id: "c3",
-    name: "ニュース",
-    description: "最新のニュースや情報",
-    members: ["u1", "u5", "gemini", "me"],
-    unread: 0,
-    type: "public",
-  },
-];
-
 // Store State
 interface AppState {
   users: User[];
@@ -73,29 +43,21 @@ interface AppState {
   activeChannelId: string;
 
   // Actions
+  setChannels: (channels: Channel[]) => void;
   setActiveChannel: (id: string) => void;
   addMessage: (message: Message) => void;
   setMessagesForChannel: (channelId: string, messages: Message[]) => void;
-  addChannel: (channel: Channel) => void;
-  updateChannel: (id: string, updates: Partial<Channel>) => void;
   addUser: (user: User) => void;
   removeUser: (id: string) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
   users: INITIAL_USERS,
-  channels: INITIAL_CHANNELS,
-  messages: [
-    {
-      id: "m1",
-      text: "こんにちは！雑談チャンネルへようこそ。",
-      senderId: "u1",
-      channelId: "c1",
-      timestamp: new Date(Date.now() - 100000),
-    },
-  ],
-  activeChannelId: "c1", // 初期チャンネルは「雑談」
+  channels: [],
+  messages: [],
+  activeChannelId: "", // API取得後に設定
 
+  setChannels: (channels) => set({ channels }),
   setActiveChannel: (id) => set({ activeChannelId: id }),
 
   addMessage: (message) =>
@@ -106,16 +68,6 @@ export const useAppStore = create<AppState>((set) => ({
   setMessagesForChannel: (channelId, newMessages) =>
     set((state) => ({
       messages: [...state.messages.filter((m) => m.channelId !== channelId), ...newMessages],
-    })),
-
-  addChannel: (channel) =>
-    set((state) => ({
-      channels: [...state.channels, channel],
-    })),
-
-  updateChannel: (id, updates) =>
-    set((state) => ({
-      channels: state.channels.map((c) => (c.id === id ? { ...c, ...updates } : c)),
     })),
 
   addUser: (user) =>

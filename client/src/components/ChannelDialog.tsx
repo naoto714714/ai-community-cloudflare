@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { useAppStore, Channel } from "@/lib/store";
+import { fetchChannels, createChannel, updateChannel } from "@/lib/channel-api";
+import { useAppStore } from "@/lib/store";
 
 interface ChannelDialogProps {
   isOpen: boolean;
@@ -16,15 +17,16 @@ interface ChannelDialogProps {
 }
 
 export default function ChannelDialog({ isOpen, onClose, mode, channelId }: ChannelDialogProps) {
-  const { users, channels, addChannel, updateChannel } = useAppStore();
+  const { users, channels, setChannels, setActiveChannel } = useAppStore();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       if (mode === "edit" && channelId) {
-        const channel = channels.find((c) => c.id === channelId);
+        const channel = channels.find((c) => c.name === channelId);
         if (channel) {
           setName(channel.name);
           setDescription(channel.description);
@@ -38,26 +40,49 @@ export default function ChannelDialog({ isOpen, onClose, mode, channelId }: Chan
     }
   }, [isOpen, mode, channelId, channels]);
 
-  const handleSubmit = () => {
-    if (!name.trim()) return;
-
-    if (mode === "create") {
-      const newChannel: Channel = {
-        id: Date.now().toString(),
-        name: name.trim(),
-        description: description.trim(),
-        members: selectedMembers,
-        unread: 0,
-        type: "public",
-      };
-      addChannel(newChannel);
-    } else if (mode === "edit" && channelId) {
-      updateChannel(channelId, {
-        description: description.trim(),
-        members: selectedMembers,
-      });
+  const refreshChannels = async (selectName?: string) => {
+    try {
+      const normalized = await fetchChannels();
+      setChannels(normalized);
+      if (selectName && normalized.some((c) => c.name === selectName)) {
+        setActiveChannel(selectName);
+      }
+    } catch (error) {
+      console.error("Refresh channels failed", error);
     }
-    onClose();
+  };
+
+  const handleSubmit = async () => {
+    if (!name.trim() || submitting) return;
+
+    const payloadMembers = Array.from(new Set([...selectedMembers, "me"]));
+
+    setSubmitting(true);
+    try {
+      if (mode === "create") {
+        const created = await createChannel({
+          channel_id: name.trim(),
+          description: description.trim(),
+          members: payloadMembers,
+        });
+
+        const newName = created?.name ?? name.trim();
+        await refreshChannels(newName);
+      } else if (mode === "edit" && channelId) {
+        await updateChannel({
+          channel_id: name.trim(),
+          description: description.trim(),
+          members: payloadMembers,
+        });
+
+        await refreshChannels(channelId);
+      }
+    } catch (error) {
+      console.error("Channel submit error", error);
+    } finally {
+      setSubmitting(false);
+      onClose();
+    }
   };
 
   const toggleMember = (userId: string) => {
@@ -115,7 +140,9 @@ export default function ChannelDialog({ isOpen, onClose, mode, channelId }: Chan
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleSubmit}>{mode === "create" ? "Create" : "Save Changes"}</Button>
+          <Button onClick={handleSubmit} disabled={submitting}>
+            {submitting ? "Saving..." : mode === "create" ? "Create" : "Save Changes"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

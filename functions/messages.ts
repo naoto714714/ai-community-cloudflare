@@ -25,7 +25,7 @@ export async function onRequestPost(context) {
   let body;
   try {
     body = await request.json();
-  } catch (e) {
+  } catch {
     return new Response("Invalid JSON", { status: 400 });
   }
 
@@ -42,18 +42,15 @@ export async function onRequestPost(context) {
       `
       INSERT INTO messages (channel_id, user_id, content)
       VALUES (?1, ?2, ?3)
-      `
+      `,
     )
       .bind(channel_id, user_id, content)
       .run();
 
-    return new Response(
-      JSON.stringify({ ok: true }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (e) {
     console.error("Failed to insert message:", e);
     return new Response("Internal Server Error", { status: 500 });

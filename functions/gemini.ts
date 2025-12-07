@@ -11,7 +11,7 @@ export async function onRequestPost(context) {
   let body: { user_prompt?: string };
   try {
     body = await request.json();
-  } catch (e) {
+  } catch {
     return new Response("Invalid JSON", { status: 400 });
   }
 
@@ -21,8 +21,7 @@ export async function onRequestPost(context) {
     return new Response("user_prompt is required", { status: 400 });
   }
 
-  const isDisabled =
-    String(env.DISABLE_GEMINI_API ?? "").toLowerCase() === "true";
+  const isDisabled = String(env.DISABLE_GEMINI_API ?? "").toLowerCase() === "true";
   if (isDisabled) {
     return new Response(
       JSON.stringify({
@@ -32,7 +31,7 @@ export async function onRequestPost(context) {
       {
         status: 200,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   }
 
@@ -63,7 +62,7 @@ export async function onRequestPost(context) {
       {
         status: 200,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   } catch (e) {
     console.error("Gemini API error:", e);

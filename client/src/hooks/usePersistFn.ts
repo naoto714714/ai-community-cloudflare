@@ -3,9 +3,7 @@ import { useRef } from "react";
 /**
  * usePersistFn instead of useCallback to reduce cognitive load
  */
-export function usePersistFn<Args extends unknown[], Return>(
-  fn: (...args: Args) => Return,
-): (...args: Args) => Return {
+export function usePersistFn<Args extends unknown[], Return>(fn: (...args: Args) => Return): (...args: Args) => Return {
   const fnRef = useRef(fn);
   fnRef.current = fn;
 
