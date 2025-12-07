@@ -53,12 +53,5 @@ export const fetchUsers = async (): Promise<User[]> => {
     unique.push(user);
   }
 
-  if (unique.length === 0) {
-    return [
-      { id: "me", name: "me", personality: "User" },
-      { id: "gemini", name: "gemini", personality: "AI Assistant" },
-    ];
-  }
-
   return unique;
 };
