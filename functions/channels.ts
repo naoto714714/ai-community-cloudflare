@@ -44,7 +44,7 @@ export async function onRequestGet(context) {
   const { env } = context;
   try {
     const { results } = await env.DB.prepare(
-      "SELECT id, created_at, channel_id, description, members FROM channels ORDER BY created_at ASC"
+      "SELECT id, created_at, channel_id, description, members FROM channels ORDER BY created_at ASC",
     ).all();
 
     const normalized = Array.isArray(results) ? results.map(normalizeRow) : [];
@@ -77,15 +77,17 @@ export async function onRequestPost(context) {
   const membersJson = parseMembers(members);
 
   try {
-    const insert = env.DB.prepare(
-      `INSERT INTO channels (channel_id, description, members) VALUES (?1, ?2, ?3)`
-    ).bind(channel_id.trim(), String(description ?? ""), membersJson);
+    const insert = env.DB.prepare(`INSERT INTO channels (channel_id, description, members) VALUES (?1, ?2, ?3)`).bind(
+      channel_id.trim(),
+      String(description ?? ""),
+      membersJson,
+    );
 
     const runResult = await insert.run();
     const newId = runResult?.meta?.last_row_id ?? runResult?.meta?.lastRowId;
 
     const select = env.DB.prepare(
-      "SELECT id, created_at, channel_id, description, members FROM channels WHERE id = ?1"
+      "SELECT id, created_at, channel_id, description, members FROM channels WHERE id = ?1",
     ).bind(newId ?? null);
     const { results } = await select.all();
     const created = Array.isArray(results) && results[0] ? normalizeRow(results[0]) : null;
@@ -138,9 +140,7 @@ export async function onRequestPatch(context) {
   params.push(channel_id.trim());
 
   try {
-    const stmt = env.DB.prepare(
-      `UPDATE channels SET ${updates.join(", ")} WHERE channel_id = ?`
-    ).bind(...params);
+    const stmt = env.DB.prepare(`UPDATE channels SET ${updates.join(", ")} WHERE channel_id = ?`).bind(...params);
     const result = await stmt.run();
 
     if (result?.meta?.changes === 0) {
@@ -148,8 +148,10 @@ export async function onRequestPatch(context) {
     }
 
     const { results } = await env.DB.prepare(
-      "SELECT id, created_at, channel_id, description, members FROM channels WHERE channel_id = ?1"
-    ).bind(channel_id.trim()).all();
+      "SELECT id, created_at, channel_id, description, members FROM channels WHERE channel_id = ?1",
+    )
+      .bind(channel_id.trim())
+      .all();
 
     const updated = Array.isArray(results) && results[0] ? normalizeRow(results[0]) : null;
 

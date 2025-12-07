@@ -16,8 +16,16 @@ const DEFAULT_AUTO_CHAT_INTERVAL_SEC = 60;
 const GEMINI_USER_ID = "gemini";
 
 export default function ChatLayout() {
-  const { users, channels, messages, activeChannelId, setActiveChannel, setChannels, addMessage, setMessagesForChannel } =
-    useAppStore();
+  const {
+    users,
+    channels,
+    messages,
+    activeChannelId,
+    setActiveChannel,
+    setChannels,
+    addMessage,
+    setMessagesForChannel,
+  } = useAppStore();
 
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -46,7 +54,10 @@ export default function ChatLayout() {
         }
       } catch (error: unknown) {
         const isAbort =
-          typeof error === "object" && error !== null && "name" in error && (error as { name?: string }).name === "AbortError";
+          typeof error === "object" &&
+          error !== null &&
+          "name" in error &&
+          (error as { name?: string }).name === "AbortError";
         if (isAbort) return;
         console.error("Load channels error", error);
       }
@@ -124,7 +135,10 @@ export default function ChatLayout() {
         setMessagesForChannel(activeChannelId, normalized);
       } catch (error: unknown) {
         const isAbort =
-          typeof error === "object" && error !== null && "name" in error && (error as { name?: string }).name === "AbortError";
+          typeof error === "object" &&
+          error !== null &&
+          "name" in error &&
+          (error as { name?: string }).name === "AbortError";
         if (isCancelled || isAbort) return;
         console.error("Fetch messages error", error);
       }
@@ -531,8 +545,8 @@ export default function ChatLayout() {
         <div className="p-6 pt-2 bg-white">
           <form
             onSubmit={handleSendMessage}
-              className="relative flex items-center gap-2 bg-gray-50 p-2 rounded-[1.5rem] border border-gray-200 focus-within:border-[var(--color-soft-blue)] focus-within:ring-4 focus-within:ring-blue-50 transition-all duration-300"
-            >
+            className="relative flex items-center gap-2 bg-gray-50 p-2 rounded-[1.5rem] border border-gray-200 focus-within:border-[var(--color-soft-blue)] focus-within:ring-4 focus-within:ring-blue-50 transition-all duration-300"
+          >
             <Button
               type="button"
               variant="ghost"
@@ -542,12 +556,12 @@ export default function ChatLayout() {
               <Plus size={20} />
             </Button>
 
-              <Input
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder={`Message #${activeChannel?.name ?? ""}`}
-                className="flex-1 border-none bg-transparent shadow-none focus-visible:ring-0 text-base placeholder:text-gray-400 h-12"
-              />
+            <Input
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder={`Message #${activeChannel?.name ?? ""}`}
+              className="flex-1 border-none bg-transparent shadow-none focus-visible:ring-0 text-base placeholder:text-gray-400 h-12"
+            />
 
             <div className="flex items-center gap-1 pr-1">
               <Button

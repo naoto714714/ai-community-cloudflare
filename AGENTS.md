@@ -1,6 +1,7 @@
 # AGENTS Guide
 
 ## リポジトリ概要
+
 - @README.md
 
 ## 開発ルール
