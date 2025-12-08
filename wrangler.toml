@@ -8,4 +8,4 @@ DISABLE_GEMINI_API = "false"
 [[d1_databases]]
 binding = "DB"
 database_name = "ai-community"
-database_id = "85788d53-f633-4e39-8b65-5f07103369e6"
+database_id = "c84a1450-7646-46e2-9d0a-0069b6a10562"
