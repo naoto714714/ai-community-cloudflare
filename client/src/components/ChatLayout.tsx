@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { Send, Hash, Bot, Plus, Search, Bell, MoreVertical, Smile, ChevronDown, Users } from "lucide-react";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { fetchChannels } from "@/lib/channel-api";
 import { requestGemini as requestGeminiApi } from "@/lib/gemini-api";
 import { createMessage, fetchMessagesByChannel } from "@/lib/message-api";
-import { ME_USER_ID } from "@shared/const";
 import { useAppStore } from "@/lib/store";
 import { fetchUsers } from "@/lib/user-api";
 import { cn } from "@/lib/utils";
+import { ME_USER_ID } from "@shared/const";
 import ChannelDialog from "./ChannelDialog";
 import UserListDialog from "./UserListDialog";
 
@@ -65,8 +65,14 @@ export default function ChatLayout() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const activeChannel = channels.find((c) => c.name === activeChannelId) || channels[0];
-  const currentMessages = activeChannel ? messages.filter((m) => m.channelId === activeChannel.name) : [];
-  const channelMembers = activeChannel ? users.filter((u) => activeChannel.members.includes(u.id)) : [];
+  const currentMessages = useMemo(
+    () => (activeChannel ? messages.filter((m) => m.channelId === activeChannel.name) : []),
+    [activeChannel, messages],
+  );
+  const channelMembers = useMemo(
+    () => (activeChannel ? users.filter((u) => activeChannel.members.includes(u.id)) : []),
+    [activeChannel, users],
+  );
 
   // ユーザー読み込み（Markdown frontmatter）
   useEffect(() => {
