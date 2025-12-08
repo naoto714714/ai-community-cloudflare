@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { Send, Hash, Bot, Plus, Search, Bell, MoreVertical, Smile, ChevronDown, Users } from "lucide-react";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { createMessage, fetchMessagesByChannel } from "@/lib/message-api";
 import { useAppStore } from "@/lib/store";
 import { fetchUsers } from "@/lib/user-api";
 import { cn } from "@/lib/utils";
+import { ME_USER_ID } from "@shared/const";
 import ChannelDialog from "./ChannelDialog";
 import UserListDialog from "./UserListDialog";
 
@@ -23,6 +24,23 @@ const SYSTEM_PROMPT_BASE = `## ルール
 - 日常会話として自然な返答、文量にしてください。`;
 
 const buildSystemPrompt = (profile: string) => `${SYSTEM_PROMPT_BASE}\n\n${profile}`;
+
+type ChatHistoryMessage = { text: string; senderId: string; timestamp: Date };
+
+const buildUserPrompt = (channelDescription: string | undefined, messages: ChatHistoryMessage[]): string => {
+  const theme = channelDescription?.trim() || "(なし)";
+
+  const history = [...messages]
+    .filter((m) => m.text?.trim())
+    .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
+    .slice(-10)
+    .map((m) => `[${m.senderId}]\n${m.text.trim()}`)
+    .join("\n\n");
+
+  const historyBlock = history || "(なし)";
+
+  return `### トークテーマ\n${theme}\n\n### 会話履歴\n${historyBlock}`;
+};
 
 export default function ChatLayout() {
   const {
@@ -47,8 +65,14 @@ export default function ChatLayout() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const activeChannel = channels.find((c) => c.name === activeChannelId) || channels[0];
-  const currentMessages = activeChannel ? messages.filter((m) => m.channelId === activeChannel.name) : [];
-  const channelMembers = activeChannel ? users.filter((u) => activeChannel.members.includes(u.id)) : [];
+  const currentMessages = useMemo(
+    () => (activeChannel ? messages.filter((m) => m.channelId === activeChannel.name) : []),
+    [activeChannel, messages],
+  );
+  const channelMembers = useMemo(
+    () => (activeChannel ? users.filter((u) => activeChannel.members.includes(u.id)) : []),
+    [activeChannel, users],
+  );
 
   // ユーザー読み込み（Markdown frontmatter）
   useEffect(() => {
@@ -152,15 +176,16 @@ export default function ChatLayout() {
 
     const requestGemini = async () => {
       try {
-        const availableMembers = channelMembers.filter((u) => u.id !== "me" && u.profile.trim().length > 0);
+        const availableMembers = channelMembers.filter((u) => u.id !== ME_USER_ID && u.profile.trim().length > 0);
         if (availableMembers.length === 0) return;
 
         const persona = availableMembers[Math.floor(Math.random() * availableMembers.length)];
         const systemPrompt = buildSystemPrompt(persona.profile);
+        const userPrompt = buildUserPrompt(activeChannel?.description, currentMessages);
 
         const data = await requestGeminiApi(
           {
-            user_prompt: "こんにちは",
+            user_prompt: userPrompt,
             system_prompt: systemPrompt,
           },
           abortController.signal,
@@ -192,7 +217,7 @@ export default function ChatLayout() {
       window.clearInterval(intervalId);
       abortController.abort();
     };
-  }, [activeChannelId, addMessage, channelMembers, persistMessage]);
+  }, [activeChannelId, activeChannel, addMessage, channelMembers, currentMessages, persistMessage]);
 
   const handleSendMessage = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -204,13 +229,13 @@ export default function ChatLayout() {
     const newMessage = {
       id: Date.now().toString(),
       text: inputText,
-      senderId: "me",
+      senderId: ME_USER_ID,
       channelId,
       timestamp: new Date(),
     };
 
     addMessage(newMessage);
-    void persistMessage(channelId, "me", inputText);
+    void persistMessage(channelId, ME_USER_ID, inputText);
     setInputText("");
   };
 
@@ -345,7 +370,7 @@ export default function ChatLayout() {
                   key={member.id}
                   className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center overflow-hidden"
                 >
-                  {member.id !== "me" ? (
+                  {member.id !== ME_USER_ID ? (
                     <div className="w-full h-full bg-[var(--color-soft-cyan)] flex items-center justify-center text-white">
                       <Bot size={14} />
                     </div>
@@ -390,7 +415,7 @@ export default function ChatLayout() {
             </div>
           ) : (
             currentMessages.map((msg, index) => {
-              const isMe = msg.senderId === "me";
+              const isMe = msg.senderId === ME_USER_ID;
               const sender = users.find((u) => u.id === msg.senderId);
               const showAvatar = index === 0 || currentMessages[index - 1].senderId !== msg.senderId;
 

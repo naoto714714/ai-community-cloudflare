@@ -47,6 +47,11 @@ export async function onRequestPost(context) {
   });
 
   try {
+    console.log("[Gemini] request", {
+      system_prompt: system_prompt?.slice(0, 5000),
+      user_prompt: user_prompt?.slice(0, 5000),
+    });
+
     const geminiResponse = await ai.models.generateContent({
       model: GEMINI_MODEL,
       contents: user_prompt,
