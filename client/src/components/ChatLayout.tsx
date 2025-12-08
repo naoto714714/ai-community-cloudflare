@@ -9,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { fetchChannels } from "@/lib/channel-api";
 import { requestGemini as requestGeminiApi } from "@/lib/gemini-api";
 import { createMessage, fetchMessagesByChannel } from "@/lib/message-api";
-import { ME_USER_ID } from "@/lib/constants";
+import { ME_USER_ID } from "@shared/const";
 import { useAppStore } from "@/lib/store";
 import { fetchUsers } from "@/lib/user-api";
 import { cn } from "@/lib/utils";

@@ -2,7 +2,7 @@ import { Bot } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ME_USER_ID } from "@/lib/constants";
+import { ME_USER_ID } from "@shared/const";
 import { useAppStore } from "@/lib/store";
 
 interface UserListDialogProps {
