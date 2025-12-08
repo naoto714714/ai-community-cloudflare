@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { fetchChannels } from "@/lib/channel-api";
-import { requestGemini as requestGeminiApi } from "@/lib/gemini-api";
+import { requestLlm as requestLlmApi } from "@/lib/llm-api";
 import { createMessage, fetchMessagesByChannel } from "@/lib/message-api";
 import { useAppStore } from "@/lib/store";
 import { fetchUsers } from "@/lib/user-api";
@@ -174,7 +174,7 @@ export default function ChatLayout() {
     const channelId = activeChannelId;
     const abortController = new AbortController();
 
-    const requestGemini = async () => {
+    const requestLlm = async () => {
       try {
         const availableMembers = channelMembers.filter((u) => u.id !== ME_USER_ID && u.profile.trim().length > 0);
         if (availableMembers.length === 0) return;
@@ -183,7 +183,7 @@ export default function ChatLayout() {
         const systemPrompt = buildSystemPrompt(persona.profile);
         const userPrompt = buildUserPrompt(activeChannel?.description, currentMessages);
 
-        const data = await requestGeminiApi(
+        const data = await requestLlmApi(
           {
             user_prompt: userPrompt,
             system_prompt: systemPrompt,
@@ -208,9 +208,9 @@ export default function ChatLayout() {
       }
     };
 
-    requestGemini();
+    requestLlm();
 
-    const intervalId = window.setInterval(requestGemini, autoChatIntervalMs);
+    const intervalId = window.setInterval(requestLlm, autoChatIntervalMs);
 
     return () => {
       isCancelled = true;

@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 
-const GEMINI_MODEL = "gemini-2.5-flash";
+const DEFAULT_MODEL = "gemini-2.5-flash"; // 現状はGeminiを利用。今後他モデルにも差し替え可。
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -47,20 +47,20 @@ export async function onRequestPost(context) {
   });
 
   try {
-    console.log("[Gemini] request", {
+    console.log("[LLM] request", {
       system_prompt: system_prompt?.slice(0, 5000),
       user_prompt: user_prompt?.slice(0, 5000),
     });
 
-    const geminiResponse = await ai.models.generateContent({
-      model: GEMINI_MODEL,
+    const modelResponse = await ai.models.generateContent({
+      model: DEFAULT_MODEL,
       contents: user_prompt,
       config: {
         systemInstruction: system_prompt,
       },
     });
 
-    const text = geminiResponse.text ?? "";
+    const text = modelResponse.text ?? "";
 
     return new Response(
       JSON.stringify({
@@ -72,7 +72,7 @@ export async function onRequestPost(context) {
       },
     );
   } catch (e) {
-    console.error("Gemini API error:", e);
+    console.error("LLM API error:", e);
     return new Response("Internal Server Error", { status: 500 });
   }
 }
