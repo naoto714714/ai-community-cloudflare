@@ -2,6 +2,7 @@ import { Bot } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ME_USER_ID } from "@/lib/constants";
 import { useAppStore } from "@/lib/store";
 
 interface UserListDialogProps {
@@ -28,7 +29,7 @@ export default function UserListDialog({ isOpen, onClose, userIds, title = "All 
               <div key={user.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
                 <div className="relative">
                   <Avatar className="w-10 h-10 border border-gray-100">
-                    {user.id !== "me" ? (
+                    {user.id !== ME_USER_ID ? (
                       <div className="w-full h-full bg-[var(--color-soft-cyan)] flex items-center justify-center text-white">
                         <Bot size={20} />
                       </div>

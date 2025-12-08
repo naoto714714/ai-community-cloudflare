@@ -35,7 +35,7 @@ export default function ChannelDialog({ isOpen, onClose, mode, channelId }: Chan
       } else {
         setName("");
         setDescription("");
-        setSelectedMembers(["me"]); // Always include self
+        setSelectedMembers([ME_USER_ID]); // Always include self
       }
     }
   }, [isOpen, mode, channelId, channels]);
@@ -55,7 +55,7 @@ export default function ChannelDialog({ isOpen, onClose, mode, channelId }: Chan
   const handleSubmit = async () => {
     if (!name.trim() || submitting) return;
 
-    const payloadMembers = Array.from(new Set([...selectedMembers, "me"]));
+    const payloadMembers = Array.from(new Set([...selectedMembers, ME_USER_ID]));
 
     setSubmitting(true);
     try {
@@ -120,7 +120,7 @@ export default function ChannelDialog({ isOpen, onClose, mode, channelId }: Chan
             <ScrollArea className="h-[200px] border rounded-md p-2">
               <div className="space-y-2">
                 {users
-                  .filter((u) => u.id !== "me")
+                  .filter((u) => u.id !== ME_USER_ID)
                   .map((user) => (
                     <div key={user.id} className="flex items-center space-x-2">
                       <Checkbox
@@ -148,3 +148,4 @@ export default function ChannelDialog({ isOpen, onClose, mode, channelId }: Chan
     </Dialog>
   );
 }
+import { ME_USER_ID } from "@/lib/constants";

@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { fetchChannels } from "@/lib/channel-api";
 import { requestGemini as requestGeminiApi } from "@/lib/gemini-api";
 import { createMessage, fetchMessagesByChannel } from "@/lib/message-api";
+import { ME_USER_ID } from "@/lib/constants";
 import { useAppStore } from "@/lib/store";
 import { fetchUsers } from "@/lib/user-api";
 import { cn } from "@/lib/utils";
@@ -169,7 +170,7 @@ export default function ChatLayout() {
 
     const requestGemini = async () => {
       try {
-        const availableMembers = channelMembers.filter((u) => u.id !== "me" && u.profile.trim().length > 0);
+        const availableMembers = channelMembers.filter((u) => u.id !== ME_USER_ID && u.profile.trim().length > 0);
         if (availableMembers.length === 0) return;
 
         const persona = availableMembers[Math.floor(Math.random() * availableMembers.length)];
@@ -222,13 +223,13 @@ export default function ChatLayout() {
     const newMessage = {
       id: Date.now().toString(),
       text: inputText,
-      senderId: "me",
+      senderId: ME_USER_ID,
       channelId,
       timestamp: new Date(),
     };
 
     addMessage(newMessage);
-    void persistMessage(channelId, "me", inputText);
+    void persistMessage(channelId, ME_USER_ID, inputText);
     setInputText("");
   };
 
@@ -363,7 +364,7 @@ export default function ChatLayout() {
                   key={member.id}
                   className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center overflow-hidden"
                 >
-                  {member.id !== "me" ? (
+                  {member.id !== ME_USER_ID ? (
                     <div className="w-full h-full bg-[var(--color-soft-cyan)] flex items-center justify-center text-white">
                       <Bot size={14} />
                     </div>
@@ -408,7 +409,7 @@ export default function ChatLayout() {
             </div>
           ) : (
             currentMessages.map((msg, index) => {
-              const isMe = msg.senderId === "me";
+              const isMe = msg.senderId === ME_USER_ID;
               const sender = users.find((u) => u.id === msg.senderId);
               const showAvatar = index === 0 || currentMessages[index - 1].senderId !== msg.senderId;
 
