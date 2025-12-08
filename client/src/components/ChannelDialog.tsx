@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { fetchChannels, createChannel, updateChannel } from "@/lib/channel-api";
 import { useAppStore } from "@/lib/store";
+import { ME_USER_ID } from "@/lib/constants";
 
 interface ChannelDialogProps {
   isOpen: boolean;
@@ -148,4 +149,3 @@ export default function ChannelDialog({ isOpen, onClose, mode, channelId }: Chan
     </Dialog>
   );
 }
-import { ME_USER_ID } from "@/lib/constants";
