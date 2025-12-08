@@ -7,6 +7,7 @@ export type User = {
   name: string;
   avatar?: string;
   personality: string;
+  profile: string;
 };
 
 export type Channel = {

@@ -1,14 +1,11 @@
 import { GoogleGenAI } from "@google/genai";
 
 const GEMINI_MODEL = "gemini-2.5-flash";
-const SYSTEM_PROMPT = `
-日本語で回答してください。
-`;
 
 export async function onRequestPost(context) {
   const { request, env } = context;
 
-  let body: { user_prompt?: string };
+  let body: { user_prompt?: string; system_prompt?: string };
   try {
     body = await request.json();
   } catch {
@@ -16,9 +13,14 @@ export async function onRequestPost(context) {
   }
 
   const user_prompt = body.user_prompt?.trim();
+  const system_prompt = body.system_prompt?.trim();
 
   if (!user_prompt) {
     return new Response("user_prompt is required", { status: 400 });
+  }
+
+  if (!system_prompt) {
+    return new Response("system_prompt is required", { status: 400 });
   }
 
   const isDisabled = String(env.DISABLE_GEMINI_API ?? "").toLowerCase() === "true";
@@ -49,7 +51,7 @@ export async function onRequestPost(context) {
       model: GEMINI_MODEL,
       contents: user_prompt,
       config: {
-        systemInstruction: SYSTEM_PROMPT,
+        systemInstruction: system_prompt,
       },
     });
 
