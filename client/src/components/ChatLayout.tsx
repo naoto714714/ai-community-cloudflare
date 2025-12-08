@@ -38,7 +38,6 @@ export default function ChatLayout() {
   } = useAppStore();
 
   const [inputText, setInputText] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const [channelDialogOpen, setChannelDialogOpen] = useState(false);
   const [channelDialogMode, setChannelDialogMode] = useState<"create" | "edit">("create");
   const [userListOpen, setUserListOpen] = useState(false);
@@ -213,27 +212,6 @@ export default function ChatLayout() {
     addMessage(newMessage);
     void persistMessage(channelId, "me", inputText);
     setInputText("");
-    setIsTyping(true);
-
-    // Random Bot Auto-reply
-    setTimeout(() => {
-      // Filter bots (users who are not 'me') that are members of the current channel
-      const availableBots = channelMembers.filter((u) => u.id !== "me");
-
-      if (availableBots.length > 0) {
-        const randomBot = availableBots[Math.floor(Math.random() * availableBots.length)];
-
-        const replyMessage = {
-          id: (Date.now() + 1).toString(),
-          text: "こんにちは",
-          senderId: randomBot.id,
-          channelId: activeChannelId,
-          timestamp: new Date(),
-        };
-        addMessage(replyMessage);
-      }
-      setIsTyping(false);
-    }, 1500);
   };
 
   const openCreateChannel = () => {
@@ -472,20 +450,6 @@ export default function ChatLayout() {
                 </motion.div>
               );
             })
-          )}
-          {isTyping && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex gap-3">
-              <div className="w-10 h-10 flex-shrink-0">
-                <div className="w-full h-full bg-[var(--color-soft-cyan)] rounded-full flex items-center justify-center text-white">
-                  <Bot size={20} />
-                </div>
-              </div>
-              <div className="bg-[var(--color-soft-gray)] px-4 py-3 rounded-2xl rounded-tl-none flex items-center gap-1">
-                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
-              </div>
-            </motion.div>
           )}
         </div>
 
