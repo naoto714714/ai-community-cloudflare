@@ -24,6 +24,23 @@ const SYSTEM_PROMPT_BASE = `## ルール
 
 const buildSystemPrompt = (profile: string) => `${SYSTEM_PROMPT_BASE}\n\n${profile}`;
 
+type ChatHistoryMessage = { text: string; senderId: string; timestamp: Date };
+
+const buildUserPrompt = (channelDescription: string | undefined, messages: ChatHistoryMessage[]): string => {
+  const theme = channelDescription?.trim() || "(なし)";
+
+  const history = [...messages]
+    .filter((m) => m.text?.trim())
+    .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
+    .slice(-10)
+    .map((m) => `[${m.senderId}]\n${m.text.trim()}`)
+    .join("\n\n");
+
+  const historyBlock = history || "(なし)";
+
+  return `### トークテーマ\n${theme}\n\n### 会話履歴\n${historyBlock}`;
+};
+
 export default function ChatLayout() {
   const {
     users,
@@ -157,10 +174,11 @@ export default function ChatLayout() {
 
         const persona = availableMembers[Math.floor(Math.random() * availableMembers.length)];
         const systemPrompt = buildSystemPrompt(persona.profile);
+        const userPrompt = buildUserPrompt(activeChannel?.description, currentMessages);
 
         const data = await requestGeminiApi(
           {
-            user_prompt: "こんにちは",
+            user_prompt: userPrompt,
             system_prompt: systemPrompt,
           },
           abortController.signal,
@@ -192,7 +210,7 @@ export default function ChatLayout() {
       window.clearInterval(intervalId);
       abortController.abort();
     };
-  }, [activeChannelId, addMessage, channelMembers, persistMessage]);
+  }, [activeChannelId, activeChannel, addMessage, channelMembers, currentMessages, persistMessage]);
 
   const handleSendMessage = (e?: React.FormEvent) => {
     e?.preventDefault();
