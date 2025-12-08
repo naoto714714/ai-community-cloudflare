@@ -16,7 +16,13 @@ import ChannelDialog from "./ChannelDialog";
 import UserListDialog from "./UserListDialog";
 
 const DEFAULT_AUTO_CHAT_INTERVAL_SEC = 60;
-const GEMINI_USER_ID = "gemini";
+
+const SYSTEM_PROMPT_BASE = `## ルール
+- あなたは「人格プロファイル」に従って応答します。
+- AIではなく、1人の人間として振る舞い自然な会話をしてください。
+- 日常会話として自然な返答、文量にしてください。`;
+
+const buildSystemPrompt = (profile: string) => `${SYSTEM_PROMPT_BASE}\n\n${profile}`;
 
 export default function ChatLayout() {
   const {
@@ -147,9 +153,16 @@ export default function ChatLayout() {
 
     const requestGemini = async () => {
       try {
+        const availableMembers = channelMembers.filter((u) => u.id !== "me" && u.profile.trim().length > 0);
+        if (availableMembers.length === 0) return;
+
+        const persona = availableMembers[Math.floor(Math.random() * availableMembers.length)];
+        const systemPrompt = buildSystemPrompt(persona.profile);
+
         const data = await requestGeminiApi(
           {
             user_prompt: "こんにちは",
+            system_prompt: systemPrompt,
           },
           abortController.signal,
         );
@@ -159,11 +172,11 @@ export default function ChatLayout() {
         addMessage({
           id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
           text: data.reply,
-          senderId: GEMINI_USER_ID,
+          senderId: persona.id,
           channelId,
           timestamp: new Date(),
         });
-        void persistMessage(channelId, GEMINI_USER_ID, data.reply);
+        void persistMessage(channelId, persona.id, data.reply);
       } catch (error: unknown) {
         if (!isCancelled) {
           console.error("Gemini fetch error", error);
@@ -180,7 +193,7 @@ export default function ChatLayout() {
       window.clearInterval(intervalId);
       abortController.abort();
     };
-  }, [activeChannelId, addMessage, persistMessage]);
+  }, [activeChannelId, addMessage, channelMembers, persistMessage]);
 
   const handleSendMessage = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -205,7 +218,7 @@ export default function ChatLayout() {
     // Random Bot Auto-reply
     setTimeout(() => {
       // Filter bots (users who are not 'me') that are members of the current channel
-      const availableBots = channelMembers.filter((u) => u.id !== "me" && u.id !== GEMINI_USER_ID);
+      const availableBots = channelMembers.filter((u) => u.id !== "me");
 
       if (availableBots.length > 0) {
         const randomBot = availableBots[Math.floor(Math.random() * availableBots.length)];

@@ -9,27 +9,39 @@ type Frontmatter = {
   personality?: string;
 };
 
-const parseFrontmatter = (md: string): Frontmatter => {
-  const match = md.match(/^---\n([\s\S]*?)\n---/);
-  if (!match) return {};
-
-  try {
-    const parsed = YAML.parse(match[1]);
-    return parsed && typeof parsed === "object" ? (parsed as Frontmatter) : {};
-  } catch (e) {
-    console.error("Failed to parse frontmatter", e);
-    return {};
-  }
+type ParsedUser = {
+  frontmatter: Frontmatter;
+  profile: string;
 };
 
-const normalizeUser = (fm: Frontmatter): User | null => {
-  const name = fm.name?.trim();
+const parseMarkdownUser = (md: string): ParsedUser => {
+  const match = md.match(/^---\n([\s\S]*?)\n---/);
+  const frontmatterBlock = match?.[0] ?? "";
+
+  let frontmatter: Frontmatter = {};
+  if (match) {
+    try {
+      const parsed = YAML.parse(match[1]);
+      frontmatter = parsed && typeof parsed === "object" ? (parsed as Frontmatter) : {};
+    } catch (e) {
+      console.error("Failed to parse frontmatter", e);
+    }
+  }
+
+  const profile = md.replace(frontmatterBlock, "").trim();
+
+  return { frontmatter, profile };
+};
+
+const normalizeUser = ({ frontmatter, profile }: ParsedUser): User | null => {
+  const name = frontmatter.name?.trim();
   if (!name) return null;
 
   return {
     id: name, // frontmatter の name を識別子として利用
     name,
-    personality: fm.personality ?? "",
+    personality: frontmatter.personality ?? "",
+    profile,
   };
 };
 
@@ -40,7 +52,7 @@ export const fetchUsers = async (): Promise<User[]> => {
   const unique: User[] = [];
 
   for (const [path, raw] of entries) {
-    const user = normalizeUser(parseFrontmatter(raw));
+    const user = normalizeUser(parseMarkdownUser(raw));
     if (!user) continue;
 
     if (seen.has(user.id)) {

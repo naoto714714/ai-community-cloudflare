@@ -1,5 +1,6 @@
 type GeminiRequest = {
   user_prompt: string;
+  system_prompt: string;
 };
 
 export type GeminiResponse = {
