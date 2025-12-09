@@ -1,6 +1,39 @@
+import OpenAI from "openai";
 import { GoogleGenAI } from "@google/genai";
 
-const DEFAULT_MODEL = "gemini-2.5-flash"; // 現状はGeminiを利用。今後他モデルにも差し替え可。
+const GEMINI_MODEL = "gemini-2.5-flash";
+const GPT_MODEL = "gpt-5-nano";
+
+type LlmPayload = {
+  user_prompt: string;
+  system_prompt: string;
+};
+
+async function callGemini({ user_prompt, system_prompt, apiKey }: LlmPayload & { apiKey: string }) {
+  const ai = new GoogleGenAI({ apiKey });
+
+  const response = await ai.models.generateContent({
+    model: GEMINI_MODEL,
+    contents: user_prompt,
+    config: {
+      systemInstruction: system_prompt,
+    },
+  });
+
+  return response.text ?? "";
+}
+
+async function callGpt({ user_prompt, system_prompt, apiKey }: LlmPayload & { apiKey: string }) {
+  const client = new OpenAI({apiKey});
+
+  const response = await client.responses.create({
+    model: GPT_MODEL,
+    instructions: system_prompt,
+    input: user_prompt,
+  });
+
+  return response.output_text;
+}
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -23,44 +56,28 @@ export async function onRequestPost(context) {
     return new Response("system_prompt is required", { status: 400 });
   }
 
-  const isDisabled = String(env.DISABLE_GEMINI_API ?? "").toLowerCase() === "true";
-  if (isDisabled) {
-    return new Response(
-      JSON.stringify({
-        reply: "",
-        disabled: true,
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
-  }
+  const hasGptKey = Boolean(env.GPT_API_KEY);
+  const hasGeminiKey = Boolean(env.GEMINI_API_KEY);
 
-  if (!env.GEMINI_API_KEY) {
-    console.error("GEMINI_API_KEY is not set in env");
+  if (!hasGptKey && !hasGeminiKey) {
+    console.error("No LLM API keys set (GPT_API_KEY or GEMINI_API_KEY)");
     return new Response("Server configuration error", { status: 500 });
   }
 
-  const ai = new GoogleGenAI({
-    apiKey: env.GEMINI_API_KEY,
-  });
-
   try {
+    const provider = hasGptKey ? "gpt" : "gemini";
+
     console.log("[LLM] request", {
+      provider,
       system_prompt: system_prompt?.slice(0, 5000),
       user_prompt: user_prompt?.slice(0, 5000),
     });
 
-    const modelResponse = await ai.models.generateContent({
-      model: DEFAULT_MODEL,
-      contents: user_prompt,
-      config: {
-        systemInstruction: system_prompt,
-      },
-    });
+    const willUseGpt = hasGptKey;
 
-    const text = modelResponse.text ?? "";
+    const text = willUseGpt
+      ? await callGpt({ user_prompt, system_prompt, apiKey: env.GPT_API_KEY })
+      : await callGemini({ user_prompt, system_prompt, apiKey: env.GEMINI_API_KEY });
 
     return new Response(
       JSON.stringify({

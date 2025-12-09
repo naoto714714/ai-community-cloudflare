@@ -27,10 +27,14 @@ ai-community-cloudflare/
 
 ### 環境変数
 
-`.env` ファイルを作成し、以下を設定:
+`.env` ファイルを作成し、以下を設定 (少なくともどちらか片方):
 
 ```text
+# Gemini を使う場合
 GEMINI_API_KEY="your-gemini-api-key"
+
+# GPT を使う場合（存在すればこちらが優先されます）
+GPT_API_KEY="your-openai-api-key"  # gpt-5-nano を使用
 ```
 
 ### 主要なスクリプト
