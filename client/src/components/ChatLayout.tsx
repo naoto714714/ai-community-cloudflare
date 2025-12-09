@@ -16,7 +16,8 @@ import { ME_USER_ID } from "@shared/const";
 import ChannelDialog from "./ChannelDialog";
 import UserListDialog from "./UserListDialog";
 
-const DEFAULT_AUTO_CHAT_INTERVAL_SEC = 60;
+const AUTO_CHAT_INTERVAL_SEC = 60;
+const HISTORY_MESSAGES = 5;
 
 const SYSTEM_PROMPT_BASE = `## ルール
 - あなたは「人格プロファイル」に従って応答します。
@@ -39,7 +40,7 @@ const buildUserPrompt = (channelDescription: string | undefined, messages: ChatH
   const history = [...messages]
     .filter((m) => m.text?.trim())
     .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
-    .slice(-10)
+    .slice(-HISTORY_MESSAGES)
     .map((m) => `[${m.senderId}]\n${m.text.trim()}`)
     .join("\n\n");
 
@@ -173,7 +174,7 @@ export default function ChatLayout() {
   }, [activeChannelId, setMessagesForChannel]);
 
   useEffect(() => {
-    const autoChatIntervalMs = DEFAULT_AUTO_CHAT_INTERVAL_SEC * 1000;
+    const autoChatIntervalMs = AUTO_CHAT_INTERVAL_SEC * 1000;
     if (!activeChannelId) return;
 
     let isCancelled = false;
