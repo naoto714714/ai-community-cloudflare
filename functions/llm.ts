@@ -1,5 +1,5 @@
-import OpenAI from "openai";
 import { GoogleGenAI } from "@google/genai";
+import OpenAI from "openai";
 
 const GEMINI_MODEL = "gemini-2.5-flash";
 const GPT_MODEL = "gpt-5-nano";
@@ -24,7 +24,7 @@ async function callGemini({ user_prompt, system_prompt, apiKey }: LlmPayload & {
 }
 
 async function callGpt({ user_prompt, system_prompt, apiKey }: LlmPayload & { apiKey: string }) {
-  const client = new OpenAI({apiKey});
+  const client = new OpenAI({ apiKey });
 
   const response = await client.responses.create({
     model: GPT_MODEL,
