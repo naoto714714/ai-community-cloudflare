@@ -291,11 +291,11 @@ export default function ChatLayout() {
           <div className="space-y-6">
             {/* Channels Section */}
             <div>
-              <div className="flex items-center justify-between px-2 mb-2 group">
-                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Channels</h2>
+              <div className="flex items-center px-2 mb-2 gap-2 group">
+                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex-shrink-0">Channels</h2>
                 <Plus
                   size={14}
-                  className="text-gray-400 opacity-0 group-hover:opacity-100 cursor-pointer hover:text-[var(--color-soft-blue)] transition-opacity"
+                  className="text-gray-400 opacity-0 group-hover:opacity-100 cursor-pointer hover:text-[var(--color-soft-blue)] transition-opacity flex-shrink-0"
                   onClick={openCreateChannel}
                 />
               </div>
