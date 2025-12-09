@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { fetchChannels } from "@/lib/channel-api";
-import { requestGemini as requestGeminiApi } from "@/lib/gemini-api";
+import { requestLlm as requestLlmApi } from "@/lib/llm-api";
 import { createMessage, fetchMessagesByChannel } from "@/lib/message-api";
 import { useAppStore } from "@/lib/store";
 import { fetchUsers } from "@/lib/user-api";
@@ -20,8 +20,11 @@ const DEFAULT_AUTO_CHAT_INTERVAL_SEC = 60;
 
 const SYSTEM_PROMPT_BASE = `## ルール
 - あなたは「人格プロファイル」に従って応答します。
-- AIではなく、1人の人間として振る舞い自然な会話をしてください。
-- 日常会話として自然な返答、文量にしてください。`;
+- AIではなく、1人の人間として振る舞い、口語的な短文で会話してください。
+- 1回の返答は3〜5文程度を目安にすること。
+- これまでの会話の流れを踏まえて、相手の発言に対するリアクションをして、会話を発展させることを最も優先してください。
+- 共感だけでなく、自分という人物の芯を持って意見をして議論を進めてください。
+`;
 
 const buildSystemPrompt = (profile: string) => `${SYSTEM_PROMPT_BASE}\n\n${profile}`;
 
@@ -174,7 +177,7 @@ export default function ChatLayout() {
     const channelId = activeChannelId;
     const abortController = new AbortController();
 
-    const requestGemini = async () => {
+    const requestLlm = async () => {
       try {
         const availableMembers = channelMembers.filter((u) => u.id !== ME_USER_ID && u.profile.trim().length > 0);
         if (availableMembers.length === 0) return;
@@ -183,7 +186,7 @@ export default function ChatLayout() {
         const systemPrompt = buildSystemPrompt(persona.profile);
         const userPrompt = buildUserPrompt(activeChannel?.description, currentMessages);
 
-        const data = await requestGeminiApi(
+        const data = await requestLlmApi(
           {
             user_prompt: userPrompt,
             system_prompt: systemPrompt,
@@ -208,9 +211,9 @@ export default function ChatLayout() {
       }
     };
 
-    requestGemini();
+    requestLlm();
 
-    const intervalId = window.setInterval(requestGemini, autoChatIntervalMs);
+    const intervalId = window.setInterval(requestLlm, autoChatIntervalMs);
 
     return () => {
       isCancelled = true;
