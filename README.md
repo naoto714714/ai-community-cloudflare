@@ -34,7 +34,7 @@ ai-community-cloudflare/
 GEMINI_API_KEY="your-gemini-api-key"
 
 # GPT を使う場合（存在すればこちらが優先されます）
-GPT_API_KEY="your-openai-api-key"  # gpt-5-nano を使用
+GPT_API_KEY="your-openai-api-key"
 ```
 
 ### 主要なスクリプト

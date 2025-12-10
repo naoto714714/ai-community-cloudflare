@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import OpenAI from "openai";
 
 const GEMINI_MODEL = "gemini-2.5-flash";
-const GPT_MODEL = "gpt-5-nano";
+const GPT_MODEL = "gpt-5-mini";
 
 type LlmPayload = {
   user_prompt: string;
