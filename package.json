@@ -16,7 +16,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "createdb": "wrangler d1 create ai-community",
-    "select:local:msg": "wrangler d1 execute DB --local --command \"select user_id,content from messages where channel_id = '女性アイドルグループ3人 part4';\" > test.txt",
+    "select:local:msg": "wrangler d1 execute DB --local --command \"select user_id,content from messages limit 10;\"",
     "migrate:create": "wrangler d1 migrations create DB",
     "migrate:local": "wrangler d1 migrations apply DB --local",
     "migrate:remote": "wrangler d1 migrations apply DB --remote",
