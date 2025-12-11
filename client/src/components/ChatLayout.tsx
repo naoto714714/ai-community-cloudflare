@@ -17,7 +17,7 @@ import ChannelDialog from "./ChannelDialog";
 import UserListDialog from "./UserListDialog";
 
 const AUTO_CHAT_INTERVAL_SEC = 60;
-const HISTORY_MESSAGES = 5;
+const HISTORY_MESSAGES = 3;
 
 const SYSTEM_PROMPT_BASE = `## ルール
 - あなたは「人格プロファイル」に従って応答します。
@@ -68,6 +68,7 @@ export default function ChatLayout() {
   const [userListTitle, setUserListTitle] = useState("");
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const lastAutoSpeakerRef = useRef<Record<string, string | null>>({});
 
   const activeChannel = channels.find((c) => c.name === activeChannelId) || channels[0];
   const currentMessages = useMemo(
@@ -184,7 +185,13 @@ export default function ChatLayout() {
         const availableMembers = channelMembers.filter((u) => u.id !== ME_USER_ID && u.profile.trim().length > 0);
         if (availableMembers.length === 0) return;
 
-        const persona = availableMembers[Math.floor(Math.random() * availableMembers.length)];
+        const lastSpeakerId = lastAutoSpeakerRef.current[channelId] ?? null;
+        const candidateMembers =
+          lastSpeakerId === null ? availableMembers : availableMembers.filter((u) => u.id !== lastSpeakerId);
+
+        if (candidateMembers.length === 0) return;
+
+        const persona = candidateMembers[Math.floor(Math.random() * candidateMembers.length)];
         const systemPrompt = buildSystemPrompt(persona.profile);
         const userPrompt = buildUserPrompt(activeChannel?.description, currentMessages);
 
@@ -197,6 +204,8 @@ export default function ChatLayout() {
         );
 
         if (isCancelled || !data?.reply) return;
+
+        lastAutoSpeakerRef.current[channelId] = persona.id;
 
         addMessage({
           id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),

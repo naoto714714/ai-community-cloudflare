@@ -1,0 +1,13 @@
+### JSON 形式で出力
+npx wrangler d1 execute DB --local \
+  --command "select user_id,content from messages where channel_id = '女性アイドルグループ3人 part4';" \
+  --json \
+  | jq '.[0].results' > test_rows.json
+
+### 不要な部分を削って出力
+npx wrangler d1 execute DB --local \
+  --command "select user_id,content from messages where channel_id = '女性アイドルグループ3人 part4';" \
+  --json \
+  | jq -r '.[0].results[]
+    | "{\n  \"" + .user_id + "\",\n  \"" + (.content | gsub("\n"; "")) + "\"\n},"
+  ' > test_rows2.txt
